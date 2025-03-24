@@ -1,0 +1,210 @@
+{% extends 'base.html' %} {% block content %}
+<div class="jumbotron text-center">
+  <h1>Welcome to Translink!</h1>
+  <p>Your reliable partner for freight and cargo solutions.</p>
+  <!-- Button triggers for modals -->
+  <a
+    href="#loginModal"
+    class="btn btn-primary"
+    data-bs-toggle="modal"
+    data-bs-target="#loginModal"
+    >Login</a
+  >
+  <a
+    href="#registerModal"
+    class="btn btn-secondary"
+    data-bs-toggle="modal"
+    data-bs-target="#registerModal"
+    >Register</a
+  >
+</div>
+
+<!-- Login Modal -->
+<div
+  class="modal fade"
+  id="loginModal"
+  tabindex="-1"
+  aria-labelledby="loginModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="loginModalLabel">Login</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form id="loginForm" method="POST">
+          {{ form.hidden_tag() }}
+          <!-- CSRF Token -->
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            {{ form.email(class="form-control", id="email", required=True) }} {%
+            if form.email.errors %}
+            <ul class="text-danger">
+              {% for error in form.email.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            {{ form.password(class="form-control", id="password", required=True)
+            }} {% if form.password.errors %}
+            <ul class="text-danger">
+              {% for error in form.password.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+          </div>
+
+          <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+        <div
+          id="loginError"
+          class="alert alert-danger"
+          style="display: none"
+        ></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Register Modal -->
+<div
+  class="modal fade"
+  id="registerModal"
+  tabindex="-1"
+  aria-labelledby="registerModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="registerModalLabel">Register</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form id="registerForm" method="POST">
+          {{ form.hidden_tag() }}
+          <!-- CSRF Token -->
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            {{ form.username(class="form-control", id="username", required=True)
+            }} {% if form.username.errors %}
+            <ul class="text-danger">
+              {% for error in form.username.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            {{ form.email(class="form-control", id="email", required=True) }} {%
+            if form.email.errors %}
+            <ul class="text-danger">
+              {% for error in form.email.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            {{ form.password(class="form-control", id="password", required=True)
+            }} {% if form.password.errors %}
+            <ul class="text-danger">
+              {% for error in form.password.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label for="confirm_password" class="form-label"
+              >Confirm Password</label
+            >
+            {{ form.confirm_password(class="form-control",
+            id="confirm_password", required=True) }} {% if
+            form.confirm_password.errors %}
+            <ul class="text-danger">
+              {% for error in form.confirm_password.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+          </div>
+
+          <button type="submit" class="btn btn-primary">Register</button>
+        </form>
+        <div
+          id="registerError"
+          class="alert alert-danger"
+          style="display: none"
+        ></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Handle the login form submission
+  $("#loginForm").submit(function (event) {
+    event.preventDefault(); // Prevent the default form submission
+
+    $.ajax({
+      type: "POST",
+      url: "/login",
+      data: $(this).serialize(), // Serialize the form data
+      success: function (response) {
+        if (response.success) {
+          window.location.href = response.redirect_url; // Redirect to the URL provided in the response
+        } else {
+          alert(response.message); // Show error message if login fails
+        }
+      },
+      error: function () {
+        alert("An error occurred. Please try again later.");
+      },
+    });
+  });
+
+  // Handle the registration form submission
+  $("#registerForm").submit(function (event) {
+    event.preventDefault(); // Prevent the default form submission
+
+    $.ajax({
+      type: "POST",
+      url: "/register",
+      data: $(this).serialize(), // Serialize the form data
+      success: function (response) {
+        if (response.success) {
+          window.location.href = response.redirect_url; // Redirect to the URL provided in the response
+        } else {
+          alert(response.message); // Show error message if registration fails
+        }
+      },
+      error: function () {
+        alert("An error occurred. Please try again later.");
+      },
+    });
+  });
+</script>
+{% endblock %}
