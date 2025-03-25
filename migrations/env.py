@@ -25,10 +25,11 @@ def get_engine():
 
 
 def get_engine_url():
-    """Retrieve the database URL directly from Flask's configuration"""
-    # Access the database URI from Flask's app config
-    db_url = current_app.config['SQLALCHEMY_DATABASE_URI']
-    return db_url
+    try:
+        return get_engine().url.render_as_string(hide_password=False).replace(
+            '%', '%%')
+    except AttributeError:
+        return str(get_engine().url).replace('%', '%%')
 
 
 # add your model's MetaData object here

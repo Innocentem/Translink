@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Post New Cargo</h2>
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    
+    <div>
+        {{ form.name.label }} {{ form.name(class="form-control") }}
+    </div>
+
+    <div>
+        {{ form.weight.label }} {{ form.weight(class="form-control") }}
+    </div>
+
+    <div>
+        {{ form.origin.label }} {{ form.origin(class="form-control") }}
+    </div>
+
+    <div>
+        {{ form.destination.label }} {{ form.destination(class="form-control") }}
+    </div>
+
+    <div>
+        {{ form.image.label }} {{ form.image(class="form-control") }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">{{ form.submit.label }}</button>
+</form>
+{% endblock %}

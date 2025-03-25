@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translink - Cargo Transport</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="#">Translink</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>
+                <li class="nav-item"><a class="nav-link btn btn-primary text-white" href="{{ url_for('register') }}">Sign Up</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<header class="hero bg-primary text-white text-center py-5">
+    <div class="container">
+        <h1>Seamless Cargo Transportation Across East Africa</h1>
+        <p>Find trucks for your goods or post your available fleet.</p>
+        <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">Get Started</a>
+    </div>
+</header>
+
+<!-- Features -->
+<section class="container my-5">
+    <div class="row text-center">
+        <div class="col-md-4">
+            <h3>For Customers</h3>
+            <p>Find the best trucks to transport your goods safely.</p>
+        </div>
+        <div class="col-md-4">
+            <h3>For Fleet Owners</h3>
+            <p>Post your available trucks and get instant bookings.</p>
+        </div>
+        <div class="col-md-4">
+            <h3>Real-time Booking</h3>
+            <p>Track and manage your cargo transport efficiently.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="text-center bg-dark text-white py-3">
+    <p>&copy; 2025 Translink. All rights reserved.</p>
+</footer>
+
+</body>
+</html>

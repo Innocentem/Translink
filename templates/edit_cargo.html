@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Edit Cargo</h2>
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+            <label class="form-label">Cargo Name</label>
+            {{ form.name(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Weight (kg)</label>
+            {{ form.weight(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Destination</label>
+            {{ form.destination(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Cargo Image</label>
+            {% if cargo.image %}
+                <p>Current image:</p>
+                <img src="{{ url_for('static', filename='uploads/' + cargo.image) }}" alt="Current Image" width="200">
+            {% endif %}
+            {{ form.image(class="form-control") }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Cargo</button>
+    </form>
+</div>
+{% endblock %}

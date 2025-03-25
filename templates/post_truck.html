@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Post a Truck</h2>
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            <label class="form-label">Truck Name</label>
+            {{ form.name(class="form-control", required=True) }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Routes (Comma separated)</label>
+            {{ form.routes(class="form-control", required=True) }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Truck Image</label>
+            {{ form.image(class="form-control") }}
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+{% endblock %}
