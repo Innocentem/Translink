@@ -92,41 +92,44 @@ class CargoForm(FlaskForm):
     submit = SubmitField('Post Cargo')
 
 # Routes
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def landing():
-    return render_template('landing.html')
+    login_form = LoginForm()
+    register_form = RegisterForm()
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    form = RegisterForm()
-    if form.validate_on_submit():
-        existing_user = User.query.filter_by(username=form.username.data).first()
-        if existing_user:
-            flash('Username already taken. Choose another one.', 'danger')
-        else:
-            hashed_pw = generate_password_hash(form.password.data, method='pbkdf2:sha256')
-            avatar_filename = None
-            if form.avatar.data:
-                avatar_filename = secure_filename(form.avatar.data.filename)
-                form.avatar.data.save(os.path.join(app.config['UPLOAD_FOLDER'], avatar_filename))
-            new_user = User(username=form.username.data, password=hashed_pw, avatar=avatar_filename)
-            db.session.add(new_user)
-            db.session.commit()
-            flash('Registration successful! You can now log in.', 'success')
-            return redirect(url_for('login'))
-    return render_template('register.html', form=form)
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user and check_password_hash(user.password, form.password.data):
+    # Handle login
+    if login_form.validate_on_submit():
+        user = User.query.filter_by(username=login_form.username.data).first()
+        if user and check_password_hash(user.password, login_form.password.data):
             login_user(user)
             return redirect(url_for('dashboard'))
         else:
             flash('Invalid username or password', 'danger')
-    return render_template('login.html', form=form)
+
+    # Handle registration
+    if register_form.validate_on_submit():
+        existing_user = User.query.filter_by(username=register_form.username.data).first()
+        if existing_user:
+            flash('Username already taken. Choose another one.', 'danger')
+        else:
+            hashed_pw = generate_password_hash(register_form.password.data, method='pbkdf2:sha256')
+            avatar_filename = None
+            if register_form.avatar.data:
+                if allowed_file(register_form.avatar.data.filename):
+                    avatar_filename = secure_filename(register_form.avatar.data.filename)
+                    register_form.avatar.data.save(os.path.join(app.config['UPLOAD_FOLDER'], avatar_filename))
+                else:
+                    flash('Invalid avatar file type. Only images allowed.', 'danger')
+                    return render_template('landing.html', login_form=login_form, register_form=register_form)
+
+            new_user = User(username=register_form.username.data, password=hashed_pw, avatar=avatar_filename)
+            db.session.add(new_user)
+            db.session.commit()
+            flash('Registration successful! You can now log in.', 'success')
+            return redirect(url_for('landing'))  # Stay on the same page after successful registration
+
+    # Render the landing page with login and registration forms inside modals
+    return render_template('landing.html', login_form=login_form, register_form=register_form)
 
 @app.route('/logout')
 @login_required
