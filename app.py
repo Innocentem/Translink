@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from wtforms import StringField, PasswordField, SubmitField, FileField, FloatField
 from wtforms.validators import DataRequired, EqualTo
+from flask_wtf.file import FileField, FileAllowed
 from flask_migrate import Migrate
 import os
 
@@ -48,12 +49,11 @@ class Cargo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     weight = db.Column(db.Float, nullable=False)  # Weight in kg
-    origin = db.Column(db.String(300), nullable=False)  # New 'origin' field
-    destination = db.Column(db.String(300), nullable=False)
+    origin = db.Column(db.String(300), nullable=False)  # Origin field remains
+    route = db.Column(db.String(300), nullable=False)  # Use route instead of destination
     image = db.Column(db.String(200), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     status = db.Column(db.String(20), default='Available')  # Add the status field
-
 
 
 # Login Manager
@@ -79,16 +79,16 @@ class LoginForm(FlaskForm):
 class TruckForm(FlaskForm):
     name = StringField('Truck Name', validators=[DataRequired()])
     routes = StringField('Routes (Comma separated)', validators=[DataRequired()])
-    image = FileField('Truck Image')
+    image = FileField('Truck Image', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')])
     submit = SubmitField('Post Truck')
 
 # Cargo Form
 class CargoForm(FlaskForm):
     name = StringField('Cargo Name', validators=[DataRequired()])
     weight = FloatField('Weight (kg)', validators=[DataRequired()])
-    origin = StringField('Origin', validators=[DataRequired()])  # Add the origin field
-    destination = StringField('Destination', validators=[DataRequired()])
-    image = FileField('Cargo Image')
+    origin = StringField('Origin', validators=[DataRequired()])
+    route = StringField('Route', validators=[DataRequired()])  # Replace destination with route
+    image = FileField('Cargo Image', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')])
     submit = SubmitField('Post Cargo')
 
 # Routes
@@ -151,43 +151,67 @@ def post_truck():
         if form.image.data:
             image_filename = secure_filename(form.image.data.filename)
             form.image.data.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
-        new_truck = Truck(name=form.name.data, routes=form.routes.data, image=image_filename, user_id=current_user.id)
+
+        # Convert routes string to list
+        route_list = [route.strip() for route in form.routes.data.split(',')]
+
+        new_truck = Truck(
+            name=form.name.data,
+            routes=','.join(route_list),
+            image=image_filename,
+            user_id=current_user.id
+        )
+
         db.session.add(new_truck)
         db.session.commit()
+
+        print(f"DEBUG: New Truck ID {new_truck.id} added by User ID {new_truck.user_id}")
+
         flash('Truck posted successfully!', 'success')
         return redirect(url_for('dashboard'))
+
+    print(f"DEBUG: Current User ID: {current_user.id}")  # Debugging
     return render_template('post_truck.html', form=form)
 
 @app.route('/post-cargo', methods=['GET', 'POST'])
 @login_required
 def post_cargo():
     form = CargoForm()
+
     if form.validate_on_submit():
+        print("✅ Form validation passed!")  # Debugging message
+
         image_filename = None
         if form.image.data:
             image_filename = secure_filename(form.image.data.filename)
-            form.image.data.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
-        
-        # Remove any non-numeric characters from weight and convert to float
-        weight = ''.join(filter(str.isdigit, form.weight.data))
-        weight = float(weight)
-        
-        # Create a new Cargo object with all fields, including 'origin'
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+            print(f"📸 Saving image to: {image_path}")  # Debugging message
+            form.image.data.save(image_path)
+        else:
+            print("❌ No image uploaded")  # Debugging message for missing image
+
+        # Store cargo in the database
         new_cargo = Cargo(
             name=form.name.data, 
-            weight=weight, 
-            origin=form.origin.data,  # Add origin to the Cargo model
-            destination=form.destination.data, 
+            weight=form.weight.data,  
+            origin=form.origin.data, 
+            route=form.route.data,  # Corrected field (using 'route' instead of 'destination')
             image=image_filename, 
-            user_id=current_user.id
+            user_id=current_user.id,
+            status='Available'
         )
-        
-        # Add the new cargo to the database and commit
+
+        print(f"🚛 New cargo added: {new_cargo}")  # Debugging message
+
         db.session.add(new_cargo)
         db.session.commit()
-        
+
         flash('Cargo posted successfully!', 'success')
         return redirect(url_for('dashboard'))
+
+    # Print validation errors if any
+    print("❌ Form validation failed!")
+    print(form.errors)  # Debugging message to print specific form validation errors
     
     return render_template('post_cargo.html', form=form)
 
@@ -319,34 +343,31 @@ def edit_cargo(cargo_id):
 
 @app.route('/browse', methods=['GET'])
 def browse():
-    cargo_status = request.args.get('cargo_status', 'available')  # Default is available
-    truck_status = request.args.get('truck_status', 'available')  # Default is available
-    search_query = request.args.get('search', '')  # Get search query if any
-    
-    # Pagination settings
-    cargo_page = request.args.get('cargo_page', 1, type=int)
+    search_query = request.args.get('search', '')
+    truck_status = request.args.get('truck_status', 'all')
+    cargo_status = request.args.get('cargo_status', 'all')
+
+    # Pagination for Trucks
     truck_page = request.args.get('truck_page', 1, type=int)
-    
-    # Fetch filtered and paginated cargo based on status and search query
-    cargo_query = Cargo.query.filter(Cargo.status == cargo_status)
-    if search_query:
-        cargo_query = cargo_query.filter(Cargo.origin.contains(search_query) | Cargo.destination.contains(search_query))
-    cargo = cargo_query.paginate(page=cargo_page, per_page=6, error_out=False)  # Corrected argument names
+    trucks = Truck.query.paginate(page=truck_page, per_page=6)
 
-    # Fetch filtered and paginated trucks based on availability and search query
-    if truck_status == 'available':
-        truck_query = Truck.query.filter(Truck.available == True)  # Only available trucks
-    else:
-        truck_query = Truck.query.filter(Truck.available == False)  # Only booked trucks
-    
-    if search_query:
-        truck_query = truck_query.filter(Truck.name.contains(search_query))  # Assuming search is by truck name
-    
-    trucks = truck_query.paginate(page=truck_page, per_page=6, error_out=False)  # Corrected argument names
+    # Pagination for Cargo
+    cargo_page = request.args.get('cargo_page', 1, type=int)
+    cargo_query = Cargo.query
 
-    return render_template('browse.html', cargo=cargo, trucks=trucks, 
-                           cargo_status=cargo_status, truck_status=truck_status,
-                           search_query=search_query)
+    if cargo_status != 'all':
+        cargo_query = cargo_query.filter(Cargo.status == cargo_status)
+
+    if search_query:
+        cargo_query = cargo_query.filter(Cargo.name.ilike(f'%{search_query}%'))
+
+    cargo = cargo_query.paginate(page=cargo_page, per_page=6)
+
+    return render_template('browse.html', 
+                           trucks=trucks, cargo=cargo, 
+                           search_query=search_query, 
+                           truck_status=truck_status, 
+                           cargo_status=cargo_status)
 
 if __name__ == '__main__':
     app.run(debug=True)

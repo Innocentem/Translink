@@ -1,99 +1,86 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Browse Cargo and Trucks</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100">
+{% extends "base.html" %}
 
-    <div class="container mx-auto my-8">
-        <h1 class="text-3xl font-semibold text-center mb-6">Browse Cargo and Trucks</h1>
+{% block content %}
+<div class="container mt-5">
+    <h2>Browse Trucks and Cargo</h2>
 
-        <!-- Search Bar -->
-        <div class="mb-6">
-            <form method="GET" action="{{ url_for('browse') }}" class="flex items-center space-x-4">
-                <input type="text" name="search" placeholder="Search Cargo/Truck..." value="{{ search_query }}" class="p-2 rounded border-2 border-gray-300">
-                <button type="submit" class="bg-blue-500 text-white p-2 rounded">Search</button>
-            </form>
-        </div>
+    <!-- Truck Listings -->
+    <h3>Available Trucks</h3>
+    <div class="row">
+        {% for truck in trucks.items %}
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <!-- Truck Image -->
+                <img src="{{ url_for('static', filename='uploads/' + truck.image) if truck.image else url_for('static', filename='default_truck.jpg') }}" 
+                     class="card-img-top" alt="Truck Image">
 
-        <!-- Filter Section -->
-        <div class="flex justify-between mb-6">
-            <div>
-                <h3 class="font-semibold">Filter Cargo</h3>
-                <a href="{{ url_for('browse', cargo_status='available', truck_status=truck_status, search=search_query) }}" class="btn btn-primary">Available Cargo</a>
-                <a href="{{ url_for('browse', cargo_status='transported', truck_status=truck_status, search=search_query) }}" class="btn btn-secondary">Transported Cargo</a>
-            </div>
-            <div>
-                <h3 class="font-semibold">Filter Trucks</h3>
-                <a href="{{ url_for('browse', cargo_status=cargo_status, truck_status='available', search=search_query) }}" class="btn btn-primary">Available Trucks</a>
-                <a href="{{ url_for('browse', cargo_status=cargo_status, truck_status='booked', search=search_query) }}" class="btn btn-secondary">Booked Trucks</a>
-            </div>
-        </div>
-
-        <!-- Cargo List -->
-        <div class="mb-8">
-            <h2 class="text-2xl font-semibold mb-4">Cargo Listings</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {% for item in cargo.items %}
-                    <div class="bg-white p-4 rounded shadow">
-                        <h3 class="font-bold">{{ item.origin }} to {{ item.destination }}</h3>
-                        <p>Status: {{ item.status }}</p>
-                        <p>Details: {{ item.details }}</p>
-                    </div>
-                {% else %}
-                    <p>No cargo found for this filter.</p>
-                {% endfor %}
-            </div>
-
-            <!-- Pagination for Cargo -->
-            <div class="flex justify-between mt-6">
-                <div>
-                    {% if cargo.has_prev %}
-                        <a href="{{ url_for('browse', cargo_page=cargo.prev_num, truck_page=truck_page, cargo_status=cargo_status, truck_status=truck_status, search=search_query) }}" class="btn btn-primary">Previous</a>
-                    {% endif %}
-                </div>
-                <div>
-                    {% if cargo.has_next %}
-                        <a href="{{ url_for('browse', cargo_page=cargo.next_num, truck_page=truck_page, cargo_status=cargo_status, truck_status=truck_status, search=search_query) }}" class="btn btn-secondary">Next</a>
-                    {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ truck.name }}</h5>
+                    <p><strong>Routes:</strong> {{ truck.routes }}</p>
+                    
+                    <!-- Availability Badge -->
+                    <span class="badge {{ 'bg-success' if truck.available else 'bg-danger' }}">
+                        {{ 'Available' if truck.available else 'Booked' }}
+                    </span>
                 </div>
             </div>
         </div>
-
-        <!-- Truck List -->
-        <div>
-            <h2 class="text-2xl font-semibold mb-4">Truck Listings</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {% for truck in trucks.items %}
-                    <div class="bg-white p-4 rounded shadow">
-                        <h3 class="font-bold">Truck ID: {{ truck.id }}</h3>
-                        <p>Status: {{ truck.status }}</p>
-                        <p>Details: {{ truck.details }}</p>
-                    </div>
-                {% else %}
-                    <p>No trucks found for this filter.</p>
-                {% endfor %}
-            </div>
-
-            <!-- Pagination for Trucks -->
-            <div class="flex justify-between mt-6">
-                <div>
-                    {% if trucks.has_prev %}
-                        <a href="{{ url_for('browse', cargo_page=cargo_page, truck_page=trucks.prev_num, cargo_status=cargo_status, truck_status=truck_status, search=search_query) }}" class="btn btn-primary">Previous</a>
-                    {% endif %}
-                </div>
-                <div>
-                    {% if trucks.has_next %}
-                        <a href="{{ url_for('browse', cargo_page=cargo_page, truck_page=trucks.next_num, cargo_status=cargo_status, truck_status=truck_status, search=search_query) }}" class="btn btn-secondary">Next</a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
+        {% else %}
+        <p>No trucks available.</p>
+        {% endfor %}
     </div>
 
-</body>
-</html>
+    <!-- Pagination for Trucks -->
+    <div class="d-flex justify-content-between mt-4">
+        {% if trucks.has_prev %}
+        <a href="{{ url_for('browse', truck_page=trucks.prev_num, cargo_page=cargo.page, search=search_query, truck_status=truck_status, cargo_status=cargo_status) }}" class="btn btn-primary">Previous</a>
+        {% endif %}
+        
+        {% if trucks.has_next %}
+        <a href="{{ url_for('browse', truck_page=trucks.next_num, cargo_page=cargo.page, search=search_query, truck_status=truck_status, cargo_status=cargo_status) }}" class="btn btn-secondary">Next</a>
+        {% endif %}
+    </div>
+
+    <!-- Cargo Listings -->
+    <h3 class="mt-5">Available Cargo</h3>
+    <div class="row">
+        {% for item in cargo.items %}
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <!-- Cargo Image -->
+                <img src="{{ url_for('static', filename='uploads/' + item.image) if item.image else url_for('static', filename='default_cargo.jpg') }}" 
+                     class="card-img-top" alt="Cargo Image">
+
+                <div class="card-body">
+                    <h5 class="card-title">{{ item.name }}</h5>
+                    <p><strong>Origin:</strong> {{ item.origin }}</p>
+                    <p><strong>Weight:</strong> {{ item.weight }} kg</p>
+                    
+                    <!-- Route for cargo -->
+                    <p><strong>Route:</strong> {{ item.route }}</p>  <!-- Display the route -->
+
+                    <!-- Cargo Status Badge -->
+                    <span class="badge {{ 'bg-success' if item.status == 'Available' else 'bg-danger' }}">
+                        {{ 'Available' if item.status == 'Available' else 'Transported' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <p>No cargo available.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination for Cargo -->
+    <div class="d-flex justify-content-between mt-4">
+        {% if cargo.has_prev %}
+        <a href="{{ url_for('browse', cargo_page=cargo.prev_num, truck_page=trucks.page, search=search_query, truck_status=truck_status, cargo_status=cargo_status) }}" class="btn btn-primary">Previous</a>
+        {% endif %}
+        
+        {% if cargo.has_next %}
+        <a href="{{ url_for('browse', cargo_page=cargo.next_num, truck_page=trucks.page, search=search_query, truck_status=truck_status, cargo_status=cargo_status) }}" class="btn btn-secondary">Next</a>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

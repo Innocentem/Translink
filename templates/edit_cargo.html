@@ -17,8 +17,13 @@
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Destination</label>
-            {{ form.destination(class="form-control") }}
+            <label class="form-label">Origin</label>
+            {{ form.origin(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Route</label>
+            {{ form.route(class="form-control") }}  <!-- Use route instead of destination -->
         </div>
 
         <div class="mb-3">
