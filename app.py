@@ -50,7 +50,7 @@ class Cargo(db.Model):
     name = db.Column(db.String(200), nullable=False)
     weight = db.Column(db.Float, nullable=False)  # Weight in kg
     origin = db.Column(db.String(300), nullable=False)  # Origin field remains
-    route = db.Column(db.String(300), nullable=False)  # Use route instead of destination
+    destination = db.Column(db.String(300), nullable=False)  # Use destination instead of route
     image = db.Column(db.String(200), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     status = db.Column(db.String(20), default='Available')  # Add the status field
@@ -87,7 +87,7 @@ class CargoForm(FlaskForm):
     name = StringField('Cargo Name', validators=[DataRequired()])
     weight = FloatField('Weight (kg)', validators=[DataRequired()])
     origin = StringField('Origin', validators=[DataRequired()])
-    route = StringField('Route', validators=[DataRequired()])  # Replace destination with route
+    destination = StringField('Destination', validators=[DataRequired()])  # Replace route with destination
     image = FileField('Cargo Image', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')])
     submit = SubmitField('Post Cargo')
 
@@ -138,85 +138,64 @@ def logout():
     flash('Logged out successfully.', 'info')
     return redirect(url_for('landing'))
 
-@app.route('/dashboard')
+@app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
-    trucks = Truck.query.filter_by(user_id=current_user.id).all()
-    cargos = Cargo.query.filter_by(user_id=current_user.id).all()
-    return render_template('dashboard.html', trucks=trucks, cargos=cargos)
+    truck_form = TruckForm()
+    cargo_form = CargoForm()
 
-@app.route('/post-truck', methods=['GET', 'POST'])
-@login_required
-def post_truck():
-    form = TruckForm()
-    if form.validate_on_submit():
+    # Handle Post Truck form submission
+    if truck_form.validate_on_submit() and 'submit_truck' in request.form:
         image_filename = None
-        if form.image.data:
-            image_filename = secure_filename(form.image.data.filename)
-            form.image.data.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
-
-        # Convert routes string to list
-        route_list = [route.strip() for route in form.routes.data.split(',')]
+        if truck_form.image.data:
+            image_filename = secure_filename(truck_form.image.data.filename)
+            truck_form.image.data.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
 
         new_truck = Truck(
-            name=form.name.data,
-            routes=','.join(route_list),
+            name=truck_form.name.data,
+            routes=truck_form.routes.data,
             image=image_filename,
             user_id=current_user.id
         )
-
         db.session.add(new_truck)
         db.session.commit()
-
-        print(f"DEBUG: New Truck ID {new_truck.id} added by User ID {new_truck.user_id}")
-
         flash('Truck posted successfully!', 'success')
         return redirect(url_for('dashboard'))
 
-    print(f"DEBUG: Current User ID: {current_user.id}")  # Debugging
-    return render_template('post_truck.html', form=form)
-
-@app.route('/post-cargo', methods=['GET', 'POST'])
-@login_required
-def post_cargo():
-    form = CargoForm()
-
-    if form.validate_on_submit():
-        print("✅ Form validation passed!")  # Debugging message
-
+    # Handle Post Cargo form submission
+    if cargo_form.validate_on_submit() and 'submit_cargo' in request.form:
         image_filename = None
-        if form.image.data:
-            image_filename = secure_filename(form.image.data.filename)
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
-            print(f"📸 Saving image to: {image_path}")  # Debugging message
-            form.image.data.save(image_path)
-        else:
-            print("❌ No image uploaded")  # Debugging message for missing image
+        if cargo_form.image.data:
+            image_filename = secure_filename(cargo_form.image.data.filename)
+            cargo_form.image.data.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
 
-        # Store cargo in the database
         new_cargo = Cargo(
-            name=form.name.data, 
-            weight=form.weight.data,  
-            origin=form.origin.data, 
-            route=form.route.data,  # Corrected field (using 'route' instead of 'destination')
-            image=image_filename, 
+            name=cargo_form.name.data,
+            weight=cargo_form.weight.data,
+            origin=cargo_form.origin.data,
+            destination=cargo_form.destination.data,
+            image=image_filename,
             user_id=current_user.id,
             status='Available'
         )
-
-        print(f"🚛 New cargo added: {new_cargo}")  # Debugging message
-
         db.session.add(new_cargo)
         db.session.commit()
-
         flash('Cargo posted successfully!', 'success')
         return redirect(url_for('dashboard'))
 
-    # Print validation errors if any
-    print("❌ Form validation failed!")
-    print(form.errors)  # Debugging message to print specific form validation errors
-    
-    return render_template('post_cargo.html', form=form)
+    # Fetch trucks and cargos for the current user
+    trucks = Truck.query.filter_by(user_id=current_user.id).all()
+    cargos = Cargo.query.filter_by(user_id=current_user.id).all()
+
+    # Pass the avatar to the template
+    return render_template(
+        'dashboard.html',
+        trucks=trucks,
+        cargos=cargos,
+        truck_form=truck_form,
+        cargo_form=cargo_form,
+        user_avatar=current_user.avatar  # Pass the avatar
+    )
 
 @app.route('/toggle_cargo_status/<int:cargo_id>', methods=['POST'])
 @login_required
@@ -237,40 +216,6 @@ def toggle_cargo_status(cargo_id):
     db.session.commit()
     flash(f'Cargo status updated to {cargo.status}.', 'success')
     return redirect(url_for('dashboard'))
-
-@app.route('/edit_truck/<int:truck_id>', methods=['GET', 'POST'])
-@login_required
-def edit_truck(truck_id):
-    # Fetch the truck to edit
-    truck = Truck.query.get_or_404(truck_id)
-
-    # Ensure the truck belongs to the current user
-    if truck.user_id != current_user.id:
-        flash('You are not authorized to edit this truck.', 'danger')
-        return redirect(url_for('dashboard'))
-
-    # Create the form
-    form = TruckForm()
-
-    if form.validate_on_submit():
-        # Update the truck with new data
-        truck.name = form.name.data
-        truck.routes = form.routes.data
-
-        # Handle image upload if a new image is uploaded
-        if form.image.data:
-            image_filename = secure_filename(form.image.data.filename)
-            form.image.data.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
-            truck.image = image_filename
-
-        db.session.commit()
-        flash('Truck updated successfully!', 'success')
-        return redirect(url_for('dashboard'))
-
-    # Pre-fill the form with existing truck data
-    form.name.data = truck.name
-    form.routes.data = truck.routes
-    return render_template('edit_truck.html', form=form, truck=truck)
 
 @app.route('/delete_truck/<int:truck_id>', methods=['POST'])
 @login_required
@@ -307,42 +252,23 @@ def toggle_availability(truck_id):
 
     return redirect(url_for('dashboard'))
 
-@app.route('/edit_cargo/<int:cargo_id>', methods=['GET', 'POST'])
+@app.route('/delete_cargo/<int:cargo_id>', methods=['POST'])
 @login_required
-def edit_cargo(cargo_id):
-    # Fetch the cargo to edit
+def delete_cargo(cargo_id):
+    # Fetch the cargo to delete
     cargo = Cargo.query.get_or_404(cargo_id)
 
     # Ensure the cargo belongs to the current user
     if cargo.user_id != current_user.id:
-        flash('You are not authorized to edit this cargo.', 'danger')
+        flash('You are not authorized to delete this truck.', 'danger')
         return redirect(url_for('dashboard'))
 
-    # Create the form
-    form = CargoForm()
+    # Delete the cargo and commit changes
+    db.session.delete(cargo)
+    db.session.commit()
 
-    if form.validate_on_submit():
-        # Update the cargo with new data
-        cargo.name = form.name.data
-        cargo.weight = float(form.weight.data)
-        cargo.destination = form.destination.data
-
-        # Handle image upload if a new image is uploaded
-        if form.image.data:
-            image_filename = secure_filename(form.image.data.filename)
-            form.image.data.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
-            cargo.image = image_filename
-
-        db.session.commit()
-        flash('Cargo updated successfully!', 'success')
-        return redirect(url_for('dashboard'))
-
-    # Pre-fill the form with existing cargo data
-    form.name.data = cargo.name
-    form.weight.data = str(cargo.weight)
-    form.destination.data = cargo.destination
-
-    return render_template('edit_cargo.html', form=form, cargo=cargo)
+    flash('Cargo deleted successfully!', 'success')
+    return redirect(url_for('dashboard'))
 
 @app.route('/browse', methods=['GET'])
 def browse():
@@ -358,19 +284,30 @@ def browse():
     cargo_page = request.args.get('cargo_page', 1, type=int)
     cargo_query = Cargo.query
 
+    # Filter cargos by status if specified
     if cargo_status != 'all':
         cargo_query = cargo_query.filter(Cargo.status == cargo_status)
 
+    # Filter cargos by search query if specified
     if search_query:
         cargo_query = cargo_query.filter(Cargo.name.ilike(f'%{search_query}%'))
 
-    cargo = cargo_query.paginate(page=cargo_page, per_page=6)
+    # Paginate cargos
+    cargos = cargo_query.paginate(page=cargo_page, per_page=6)
 
-    return render_template('browse.html', 
-                           trucks=trucks, cargo=cargo, 
-                           search_query=search_query, 
-                           truck_status=truck_status, 
-                           cargo_status=cargo_status)
+    # Debugging output
+    print("Trucks:", trucks.items)
+    print("Cargos:", cargos.items)
+
+    # Pass the correct variables to the template
+    return render_template(
+        'browse.html',
+        trucks=trucks,
+        cargos=cargos,  # Ensure 'cargos' is passed here
+        search_query=search_query,
+        truck_status=truck_status,
+        cargo_status=cargo_status
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)

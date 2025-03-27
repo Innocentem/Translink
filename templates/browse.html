@@ -1,209 +1,113 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Browse Trucks and Cargo</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css"
-        rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
-
-    <!-- <link rel="stylesheet" href="../../tailwind-css/tailwind-runtime.css" /> -->
-    <link rel="stylesheet" href="../static/css2/tailwind-build.css">
-    <link rel="stylesheet" href="../static/css2/index.css" />
-
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"
-        integrity="sha512-dPXYcDub/aeb08c63jRq/k6GaKccl256JQy/AnOq7CAnEZ9FzSL9wSbcZkMp4R26vBsMLFYH4kQ67/bbV8XaCQ=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>Browse - TransLink</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../static/assets/css/main.css">
 </head>
 
 <body>
-    <!-- Navigation Bar -->
-    <nav class="tw-bg-dark tw-text-white tw-py-3 tw-px-4">
-        <div class="tw-container tw-flex tw-items-center tw-justify-between">
-            <a class="tw-text-2xl tw-font-bold tw-text-white" href="{{ url_for('landing') }}">
-                Trans<span class="tw-text-primary">Link</span>
-            </a>
 
-            <!-- Mobile Toggle Button -->
-            <button class="navbar-toggler tw-text-white tw-p-2 tw-border-none tw-bg-transparent lg:tw-hidden"
-                type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav"
-                aria-expanded="false" aria-label="Toggle navigation">
-                <span class="bi bi-list tw-text-xl"></span>
-            </button>
+    <!-- Wrapper -->
+    <div id="wrapper">
 
-            <!-- Navigation Links (Collapsed on small screens) -->
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ml-auto">
-                    {% if current_user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('post_cargo') }}">Post Cargo</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('post_truck') }}">Post Truck</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn btn-danger text-white" href="{{ url_for('logout') }}">Logout</a>
-                    </li>
+        <!-- Header -->
+        <header id="header">
+            <h1 class="section-title">Stuck <strong>?</strong> Find your next available transporter right away!</h1>
+        </header>
+
+        <!-- Main -->
+        <section id="main">
+
+            <!-- Trucks Section -->
+            <h2 class="section-title">Available Trucks</h2>
+            <section class="thumbnails">
+                <div>
+                    {% for truck in trucks.items %}
+                    <a href="#">
+                        <img src="{{ url_for('static', filename='uploads/' + truck.image) }}" alt="Truck Image">
+                        <h3>{{ truck.name }}</h3>
+                        <p>Routes: {{ truck.routes }}</p>
+                        <p>
+                            <span class="badge {% if truck.available %}bg-success{% else %}bg-danger{% endif %}">
+                                {% if truck.available %}Available{% else %}Booked{% endif %}
+                            </span>
+                        </p>
+                    </a>
                     {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('register') }}" data-bs-toggle="modal"
-                            data-bs-target="#registerModal">Register</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('login') }}" data-bs-toggle="modal"
-                            data-bs-target="#loginModal">Login</a>
+                    <p>No available trucks at the moment.</p>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <!-- Pagination for Trucks -->
+            <nav aria-label="Truck Pagination" class="pagination-container">
+                <ul class="pagination">
+                    {% if trucks.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('browse', truck_page=trucks.prev_num) }}">Previous</a>
                     </li>
                     {% endif %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">About</a>
+                    {% if trucks.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('browse', truck_page=trucks.next_num) }}">Next</a>
                     </li>
+                    {% endif %}
                 </ul>
-            </div>
-        </div>
-    </nav>
-    <!-- Flash Messages -->
-    <div class="container mt-3">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-    </div>
-    <div class="tw-flex tw-min-h-[100vh] tw-flex-col tw-bg-black tw-text-white">
-    <section
-        class="tw-mt-5 tw-flex tw-min-h-[80vh] tw-w-full tw-flex-col tw-place-content-center tw-place-items-center tw-p-[2%] max-lg:tw-p-3">
-        <h3 class="reveal-up tw-text-center tw-text-4xl tw-font-medium max-md:tw-text-2xl">
-            Browse Trucks and Cargo
-        </h3>
+            </nav>
 
-        <!-- Truck Listings -->
-        <h4 class="tw-mt-10 tw-text-3xl tw-font-medium tw-text-center">Available Trucks</h4>
-        <div class="reveal-up tw-mt-10 tw-flex tw-flex-wrap tw-place-content-center tw-gap-10 max-lg:tw-flex-col">
-            {% for truck in trucks.items %}
-            <a href="#"
-                class="tw-flex tw-h-[400px] tw-w-[400px] tw-flex-col tw-gap-4 tw-overflow-clip tw-rounded-lg tw-p-4 max-lg:tw-w-[300px]">
-                <div class="tw-h-[250px] tw-w-full tw-overflow-hidden tw-rounded-md">
-                    <img src="{{ url_for('static', filename='uploads/' + truck.image) if truck.image else url_for('static', filename='default_truck.jpg') }}"
-                        alt="Truck Image"
-                        class="tw-h-full tw-w-full tw-object-cover tw-transition-transform tw-duration-[0.3s] hover:tw-scale-[1.04]" />
+            <!-- Cargo Section -->
+            <h2 class="section-title">Available Cargo</h2>
+            <section class="thumbnails">
+                <div>
+                    {% for cargo in cargos.items %}
+                    <a href="#">
+                        <img src="{{ url_for('static', filename='uploads/' + cargo.image) }}" alt="Cargo Image">
+                        <h3>{{ cargo.name }}</h3>
+                        <p>Route: {{ cargo.origin }} to {{ cargo.destination }}</p>
+                        <p>Weight: {{ cargo.weight }} kg</p>
+                        <p>
+                            <span class="badge {% if cargo.status == 'Available' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ cargo.status }}
+                            </span>
+                        </p>
+                    </a>
+                    {% else %}
+                    <p>No available cargo at the moment.</p>
+                    {% endfor %}
                 </div>
-                <h3 class="tw-mt-2 tw-text-2xl tw-font-semibold max-md:tw-text-xl">{{ truck.name }}</h3>
-                <p class="tw-text-gray-400"><strong>Routes:</strong> {{ truck.routes }}</p>
-                <span class="tw-text-sm {{ 'tw-text-green-500' if truck.available else 'tw-text-red-500' }}">
-                    {{ 'Available' if truck.available else 'Booked' }}
-                </span>
-            </a>
-            {% else %}
-            <p>No trucks available.</p>
-            {% endfor %}
-        </div>
+            </section>
 
-        <!-- Pagination for Trucks -->
-        <div class="d-flex justify-content-between mt-4">
-            {% if trucks.has_prev %}
-            <a href="{{ url_for('browse', truck_page=trucks.prev_num, cargo_page=cargo.page, search=search_query, truck_status=truck_status, cargo_status=cargo_status) }}"
-                class="btn btn-primary">Previous</a>
-            {% endif %}
-
-            {% if trucks.has_next %}
-            <a href="{{ url_for('browse', truck_page=trucks.next_num, cargo_page=cargo.page, search=search_query, truck_status=truck_status, cargo_status=cargo_status) }}"
-                class="btn btn-secondary">Next</a>
-            {% endif %}
-        </div>
-
-        <!-- Cargo Listings -->
-        <h4 class="tw-mt-10 tw-text-3xl tw-font-medium tw-text-center">Available Cargo</h4>
-        <div class="reveal-up tw-mt-10 tw-flex tw-flex-wrap tw-place-content-center tw-gap-10 max-lg:tw-flex-col">
-            {% for item in cargo.items %}
-            <a href="#"
-                class="tw-flex tw-h-auto tw-w-[400px] tw-flex-col tw-gap-4 tw-overflow-clip tw-rounded-lg tw-p-4 max-lg:tw-w-[300px]">
-                <div class="tw-h-[250px] tw-w-full tw-overflow-hidden tw-rounded-md">
-                    <img src="{{ url_for('static', filename='uploads/' + item.image) if item.image else url_for('static', filename='default_cargo.jpg') }}"
-                        alt="Cargo Image"
-                        class="tw-h-full tw-w-full tw-object-contain tw-transition-transform tw-duration-[0.3s] hover:tw-scale-[1.04]" />
-                </div>
-                <h3 class="tw-mt-2 tw-text-2xl tw-font-semibold max-md:tw-text-xl">{{ item.name }}</h3>
-                <p class="tw-text-gray-400"><strong>Origin:</strong> {{ item.origin }}</p>
-                <p class="tw-text-gray-400"><strong>Weight:</strong> {{ item.weight }} kg</p>
-                <p class="tw-text-gray-400"><strong>Route:</strong> {{ item.route }}</p>
-                <span class="tw-text-sm {{ 'tw-text-green-500' if item.status == 'Available' else 'tw-text-red-500' }}">
-                    {{ 'Available' if item.status == 'Available' else 'Transported' }}
-                </span>
-            </a>
-            {% else %}
-            <p>No cargo available.</p>
-            {% endfor %}
-        </div>
-
-        <!-- Pagination for Cargo -->
-        <div class="d-flex justify-content-between mt-4">
-            {% if cargo.has_prev %}
-            <a href="{{ url_for('browse', cargo_page=cargo.prev_num, truck_page=trucks.page, search=search_query, truck_status=truck_status, cargo_status=cargo_status) }}"
-                class="btn btn-primary">Previous</a>
-            {% endif %}
-
-            {% if cargo.has_next %}
-            <a href="{{ url_for('browse', cargo_page=cargo.next_num, truck_page=trucks.page, search=search_query, truck_status=truck_status, cargo_status=cargo_status) }}"
-                class="btn btn-secondary">Next</a>
-            {% endif %}
-        </div>
-    </section>
+            <!-- Pagination for Cargo -->
+            <nav aria-label="Cargo Pagination" class="pagination-container">
+                <ul class="pagination">
+                    {% if cargos.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('browse', cargo_page=cargos.prev_num) }}">Previous</a>
+                    </li>
+                    {% endif %}
+                    {% if cargos.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('browse', cargo_page=cargos.next_num) }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </section>
     </div>
 
-    <footer class="bg-dark text-center text-white py-3 mt-5">
-        <p>&copy; 2025 Translink. All rights reserved.</p>
-    </footer>
-    <script src="../static/js/jquery.min.js"></script>
-<script src="../static/js/jquery-migrate-3.0.1.min.js"></script>
+    <!-- Footer -->
+    <div class="copyright">
+        <p ><a href="https://templated.co/">Translink 2025</a></p>
+    </div>
 
-<!-- Popper.js before Bootstrap (required for Bootstrap tooltips/popovers) -->
-<script src="../static/js/popper.min.js"></script>
-<script src="../static/js/bootstrap.min.js"></script>
-
-<!-- Utility libraries (animations, easing, waypoints) -->
-<script src="../static/js/jquery.easing.1.3.js"></script>
-<script src="../static/js/jquery.waypoints.min.js"></script>
-<script src="../static/js/jquery.stellar.min.js"></script>
-<script src="../static/js/scrollax.min.js"></script>
-
-<!-- UI Components -->
-<script src="../static/js/owl.carousel.min.js"></script>
-<script src="../static/js/jquery.magnific-popup.min.js"></script>
-<script src="../static/js/aos.js"></script>
-<script src="../static/js/jquery.animateNumber.min.js"></script>
-<script src="../static/js/bootstrap-datepicker.js"></script>
-<script src="../static/js/jquery.timepicker.min.js"></script>
-
-<!-- Google Maps (external script should come before dependent script) -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVWaKrjvy3MaE7SQ74_uJiULgl1JY0H2s&sensor=false"></script>
-<script src="../static/js/google-map.js"></script>
-
-<!-- Main script (should be last to ensure everything else is loaded) -->
-<script src="../static/js/main.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.0/gsap.min.js"
-        integrity="sha512-B1lby8cGcAUU3GR+Fd809/ZxgHbfwJMp0jLTVfHiArTuUt++VqSlJpaJvhNtRf3NERaxDNmmxkdx2o+aHd4bvw=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.0/ScrollTrigger.min.js"
-        integrity="sha512-AY2+JxnBETJ0wcXnLPCcZJIJx0eimyhz3OJ55k2Jx4RtYC+XdIi2VtJQ+tP3BaTst4otlGG1TtPJ9fKrAUnRdQ=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-    <script src="../static/css2/index.js"></script>
+    <!-- Scripts -->
+    <script src="../static/assets/js/jquery.min.js"></script>
+    <script src="../static/assets/js/jquery.poptrox.min.js"></script>
+    <script src="../static/assets/js/skel.min.js"></script>
+    <script src="../static/assets/js/main.js"></script>
 </body>
 
 </html>
