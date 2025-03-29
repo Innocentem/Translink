@@ -34,6 +34,7 @@ class User(db.Model, UserMixin):
     avatar = db.Column(db.String(200), nullable=True)
     trucks = db.relationship('Truck', backref='owner', lazy=True)
     cargos = db.relationship('Cargo', backref='owner', lazy=True)  # Relationship with Cargo
+    truck_requests = db.relationship('TruckRequest', backref='requester', lazy=True)  # Relationship with TruckRequest
 
 # Truck Model
 class Truck(db.Model):
@@ -43,6 +44,14 @@ class Truck(db.Model):
     image = db.Column(db.String(200), nullable=True)
     available = db.Column(db.Boolean, default=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    status = db.Column(db.String(20), default='Available')  # Add the status field
+    requests = db.relationship('TruckRequest', backref='truck', lazy=True)  # Relationship with TruckRequest
+
+class TruckRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    truck_id = db.Column(db.Integer, db.ForeignKey('truck.id'), nullable=False)
+    requester_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    status = db.Column(db.String(50), default='Pending')  # Pending, Approved, Declined
 
 # Cargo Model
 class Cargo(db.Model):
@@ -272,42 +281,80 @@ def delete_cargo(cargo_id):
 
 @app.route('/browse', methods=['GET'])
 def browse():
-    search_query = request.args.get('search', '')
-    truck_status = request.args.get('truck_status', 'all')
-    cargo_status = request.args.get('cargo_status', 'all')
+    # Retrieve search query, filter status, and filter type from GET parameters
+    search_query = request.args.get('search', default='', type=str)
+    filter_status = request.args.get('status', default='', type=str)
+    filter_type = request.args.get('filter', default='', type=str)
 
-    # Pagination for Trucks
-    truck_page = request.args.get('truck_page', 1, type=int)
-    trucks = Truck.query.paginate(page=truck_page, per_page=6)
+    # Retrieve truck and cargo pages from GET parameters
+    truck_page = request.args.get('truck_page', default=1, type=int)
+    cargo_page = request.args.get('cargo_page', default=1, type=int)
 
-    # Pagination for Cargo
-    cargo_page = request.args.get('cargo_page', 1, type=int)
-    cargo_query = Cargo.query
+    # Query trucks based on search query and filter status
+    trucks = Truck.query.filter(Truck.name.contains(search_query))
+    if filter_status == 'Available':
+        trucks = trucks.filter(Truck.available == True)
+    elif filter_status == 'Booked':
+        trucks = trucks.filter(Truck.available == False)
 
-    # Filter cargos by status if specified
-    if cargo_status != 'all':
-        cargo_query = cargo_query.filter(Cargo.status == cargo_status)
+    # Query cargo based on search query and filter status
+    cargos = Cargo.query.filter(Cargo.name.contains(search_query))
+    if filter_status == 'Available':
+        cargos = cargos.filter(Cargo.status == 'Available')
+    elif filter_status == 'Booked':
+        cargos = cargos.filter(Cargo.status != 'Available')
 
-    # Filter cargos by search query if specified
-    if search_query:
-        cargo_query = cargo_query.filter(Cargo.name.ilike(f'%{search_query}%'))
+    # Apply pagination to trucks and cargos
+    trucks = trucks.paginate(page=truck_page, per_page=6)
+    cargos = cargos.paginate(page=cargo_page, per_page=6)
 
-    # Paginate cargos
-    cargos = cargo_query.paginate(page=cargo_page, per_page=6)
+    # Separate 'Booked' trucks and 'Transported' cargo into their own sections
+    booked_trucks = [truck for truck in trucks.items if not truck.available]
+    available_trucks = [truck for truck in trucks.items if truck.available]
 
-    # Debugging output
-    print("Trucks:", trucks.items)
-    print("Cargos:", cargos.items)
+    transported_cargos = [cargo for cargo in cargos.items if cargo.status != 'Available']
+    available_cargos = [cargo for cargo in cargos.items if cargo.status == 'Available']
 
-    # Pass the correct variables to the template
     return render_template(
         'browse.html',
-        trucks=trucks,
-        cargos=cargos,  # Ensure 'cargos' is passed here
+        booked_trucks=booked_trucks,
+        available_trucks=available_trucks,
+        transported_cargos=transported_cargos,
+        available_cargos=available_cargos,
         search_query=search_query,
-        truck_status=truck_status,
-        cargo_status=cargo_status
+        filter_status=filter_status,
+        filter_type=filter_type,
+        trucks=trucks,
+        cargos=cargos
     )
+
+@app.route('/truck_request/<int:truck_id>', methods=['POST'])
+@login_required
+def request_truck(truck_id):
+    truck = Truck.query.get_or_404(truck_id)
+    request = TruckRequest(truck_id=truck.id, requester_id=current_user.id)
+    db.session.add(request)
+    db.session.commit()
+    flash('Truck request sent successfully', 'success')
+    return redirect(url_for('browse'))
+
+@app.route('/approve_request/<int:request_id>', methods=['GET'])
+@login_required
+def approve_request(request_id):
+    request = TruckRequest.query.get_or_404(request_id)
+    request.status = 'Approved'
+    db.session.commit()
+    flash('Truck request approved successfully', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/decline_request/<int:request_id>', methods=['GET'])
+@login_required
+def decline_request(request_id):
+    request = TruckRequest.query.get_or_404(request_id)
+    request.status = 'Declined'
+    db.session.commit()
+    flash('Truck request declined successfully', 'success')
+    return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
     app.run(debug=True)

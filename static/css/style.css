@@ -9861,3 +9861,40 @@ textarea.form-control {
   100% {
     stroke-dasharray: 89, 200;
     stroke-dashoffset: -136px; } }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 30px;
+      color: #333;
+  }
+  
+  .card {
+      border: none;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .card-img-top {
+      border-bottom: 1px solid #ddd;
+  }
+  
+  .card-body {
+      padding: 20px;
+  }
+  
+  .badge {
+      font-size: 0.9rem;
+      padding: 5px 10px;
+      border-radius: 5px;
+  }
+  
+  .btn {
+      margin-right: 5px;
+  }
