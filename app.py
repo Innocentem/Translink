@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import Session
 from flask_wtf import FlaskForm
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -68,7 +69,8 @@ class Cargo(db.Model):
 # Login Manager
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    db_session = Session(bind=db.engine)  # Create a new Session
+    return db_session.query(User).get(int(user_id))
 
 # Registration Form
 class RegisterForm(FlaskForm):
