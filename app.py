@@ -100,6 +100,8 @@ class CargoForm(FlaskForm):
     image = FileField('Cargo Image', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')])
     submit = SubmitField('Post Cargo')
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'jpg', 'jpeg', 'png'}
 # Routes
 @app.route('/', methods=['GET', 'POST'])
 def landing():
