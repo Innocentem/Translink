@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, flash, request
+from flask import Flask, render_template, redirect, url_for, flash, request, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Session
 from flask_wtf import FlaskForm
@@ -10,19 +10,26 @@ from wtforms.validators import DataRequired, EqualTo
 from flask_wtf.file import FileField, FileAllowed
 from flask_migrate import Migrate
 import os
+from datetime import timedelta
+
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SECRET_KEY'] = 'my_your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///translink.db'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['SESSION_PERMANENT'] = True  # Set session to permanent
+app.config['SESSION_TYPE'] = 'filesystem'  # Store session in filesystem
+app.config['SESSION_COOKIE_SECURE'] = True  # Use secure cookies
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Set HTTPOnly flag
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Set SameSite flag
+app.config['SESSION_PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=1)  # Set session expiration time
 
 # Ensure the upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Initialize database and login manager
 db = SQLAlchemy(app)
-# Initialize Flask-Migrate and Flask-Script
 migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -151,11 +158,14 @@ def logout():
     flash('Logged out successfully.', 'info')
     return redirect(url_for('landing'))
 
+from sqlalchemy.orm import joinedload
+
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
     truck_form = TruckForm()
     cargo_form = CargoForm()
+    
 
     # Handle Post Truck form submission
     if truck_form.validate_on_submit() and 'submit_truck' in request.form:
@@ -170,10 +180,15 @@ def dashboard():
             image=image_filename,
             user_id=current_user.id
         )
-        db.session.add(new_truck)
-        db.session.commit()
-        flash('Truck added successfully!', 'success')
-        return redirect(url_for('dashboard'))
+        # Check if the truck already exists in the database
+        existing_truck = db.session.query(Truck).filter_by(name=new_truck.name, user_id=current_user.id).first()
+        if existing_truck:
+            flash('Truck with the same name already exists!', 'error')
+        else:
+            db.session.add(new_truck)
+            db.session.commit()
+            flash('Truck added successfully!', 'success')
+            return redirect(url_for('dashboard'))
 
     # Handle Post Cargo form submission
     if cargo_form.validate_on_submit() and 'submit_cargo' in request.form:
@@ -188,30 +203,25 @@ def dashboard():
             origin=cargo_form.origin.data,
             destination=cargo_form.destination.data,
             image=image_filename,
-            user_id=current_user.id,
-            status='Available'
+            user_id=current_user.id
         )
-        db.session.add(new_cargo)
-        db.session.commit()
-        flash('Cargo posted successfully!', 'success')
-        return redirect(url_for('dashboard'))
+
+        # Check if the cargo already exists in the database
+        existing_cargo = db.session.query(Cargo).filter_by(name=new_cargo.name, user_id=current_user.id).first()
+        if existing_cargo:
+            flash('Cargo with the same name already exists!', 'error')
+        else:
+            db.session.add(new_cargo)
+            db.session.commit()
+            flash('Cargo added successfully!', 'success')
+            return redirect(url_for('dashboard'))
 
     # Fetch trucks and cargos for the current user
-    user = User.query.filter_by(username=current_user.username).first()
-    db.session.add(user)  # Add the user instance to the session
-    trucks = user.trucks  # Access the related trucks
-    cargos = user.cargos  # Access the related cargos
+    trucks = db.session.query(Truck).filter_by(user_id=current_user.id).all()
+    cargos = db.session.query(Cargo).filter_by(user_id=current_user.id).all()
 
-    # Pass the avatar to the template
-    return render_template(
-        'dashboard.html',
-        trucks=trucks,
-        cargos=cargos,
-        truck_form=truck_form,
-        cargo_form=cargo_form,
-        user_avatar=current_user.avatar  # Pass the avatar
-    )
-
+    return render_template('dashboard.html', truck_form=truck_form, cargo_form=cargo_form, trucks=trucks, cargos=cargos)
+@app.route('/toggle_cargo_status/<int:cargo_id>', methods=['POST'])
 @login_required
 def toggle_cargo_status(cargo_id):
     cargo = Cargo.query.get_or_404(cargo_id)
@@ -226,9 +236,9 @@ def toggle_cargo_status(cargo_id):
         cargo.status = 'Transported'
     else:
         cargo.status = 'Available'
-    
+
     db.session.commit()
-    flash(f'Cargo status updated to {cargo.status}.', 'success')
+    flash('Cargo status updated successfully!', 'success')
     return redirect(url_for('dashboard'))
 
 @app.route('/delete_truck/<int:truck_id>', methods=['POST'])
