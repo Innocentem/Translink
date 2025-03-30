@@ -172,7 +172,7 @@ def dashboard():
         )
         db.session.add(new_truck)
         db.session.commit()
-        flash('Truck posted successfully!', 'success')
+        flash('Truck added successfully!', 'success')
         return redirect(url_for('dashboard'))
 
     # Handle Post Cargo form submission
@@ -197,8 +197,10 @@ def dashboard():
         return redirect(url_for('dashboard'))
 
     # Fetch trucks and cargos for the current user
-    trucks = Truck.query.filter_by(user_id=current_user.id).all()
-    cargos = Cargo.query.filter_by(user_id=current_user.id).all()
+    user = User.query.filter_by(username=current_user.username).first()
+    db.session.add(user)  # Add the user instance to the session
+    trucks = user.trucks  # Access the related trucks
+    cargos = user.cargos  # Access the related cargos
 
     # Pass the avatar to the template
     return render_template(
@@ -210,7 +212,6 @@ def dashboard():
         user_avatar=current_user.avatar  # Pass the avatar
     )
 
-@app.route('/toggle_cargo_status/<int:cargo_id>', methods=['POST'])
 @login_required
 def toggle_cargo_status(cargo_id):
     cargo = Cargo.query.get_or_404(cargo_id)
