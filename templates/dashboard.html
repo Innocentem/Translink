@@ -28,7 +28,7 @@
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
     <div class="container">
-      <a class="navbar-brand" href="{{ url_for('landing') }}">Trans<span>Link</span></a>
+      <a class="navbar-brand" href="{{ url_for('auth_routes.landing') }}">Trans<span>Link</span></a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav"
         aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="oi oi-menu"></span> Menu
@@ -36,12 +36,12 @@
 
       <div class="collapse navbar-collapse" id="ftco-nav">
         <ul class="navbar-nav ml-auto">
-          <li class="nav-item"><a href="{{ url_for('browse') }}" class="nav-link">Browse</a></li>
+          <li class="nav-item"><a href="{{ url_for('browse_routes.browse') }}" class="nav-link">Browse</a></li>
           <li class="nav-item"><a href="#" class="nav-link" data-toggle="modal" data-target="#postTruckModal">Add
               Truck</a></li>
           <li class="nav-item"><a href="#" class="nav-link" data-toggle="modal" data-target="#postCargoModal">Request
               Truck</a></li>
-          <li class="nav-item"><a href="{{ url_for('logout') }}" class="nav-link">Logout</a></li>
+          <li class="nav-item"><a href="{{ url_for('auth_routes.logout') }}" class="nav-link">Logout</a></li>
         </ul>
       </div>
     </div>
@@ -56,26 +56,28 @@
       <div class="row no-gutters slider-text js-fullheight align-items-end justify-content-start">
         <div class="col-md-9 ftco-animate pb-5">
           <p class="breadcrumbs">
-            <span class="mr-2"><a href="{{ url_for('landing') }}">Home <i class="ion-ios-arrow-forward"></i></a></span>
+            <span class="mr-2"><a href="{{ url_for('auth_routes.landing') }}">Home <i
+                  class="ion-ios-arrow-forward"></i></a></span>
             <span>Dashboard <i class="ion-ios-arrow-forward"></i></span>
           </p>
           <div class="container mt-4">
             <div class="row">
-              <div class="col-md-3 text-center">
-                <!-- Display User Avatar -->
-                {% if user_avatar %}
-                <img src="{{ url_for('static', filename='uploads/' + user_avatar) }}" alt="User Avatar"
-                  class="img-fluid rounded-circle" style="width: 80px; height: 80px;">
-                {% else %}
-                <img src="{{ url_for('static', filename='uploads/default-avatar.png') }}" alt="Default Avatar"
-                  class="img-fluid rounded-circle" style="width: 80px; height: 80px;">
-                {% endif %}
-              </div>
-              <div class="col-md-9">
-                <h1 class="mb-3 bread">{{ current_user.username }}</h1>
-              </div>
+                <div class="col-md-3 text-center">
+                    <!-- Display User Avatar -->
+                    {% if user.avatar %}
+                        <img src="{{ url_for('static', filename='uploads/' + user.avatar) }}" alt="User Avatar"
+                             class="img-fluid rounded-circle" style="width: 80px; height: 80px;">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='uploads/default-avatar.png') }}" alt="Default Avatar"
+                             class="img-fluid rounded-circle" style="width: 80px; height: 80px;">
+                    {% endif %}
+                </div>
+                <div class="col-md-9">
+                    <h1 class="mb-3 bread">{{ user.username }}</h1>
+                    <p style="font-size: 18px;" class="text-center">This is where you manage your fleet and Cargo</p>
+                </div>
             </div>
-          </div>
+        </div>        
         </div>
       </div>
     </div>
@@ -104,12 +106,14 @@
                   {% if truck.available %}Available{% else %}Booked{% endif %}
                 </span>
               </p>
-              <form action="{{ url_for('toggle_availability', truck_id=truck.id) }}" method="POST" class="d-inline">
+              <form action="{{ url_for('dashboard_routes.toggle_availability', truck_id=truck.id) }}" method="POST"
+                class="d-inline">
                 <button type="submit" class="btn btn-info btn-sm">
                   {% if truck.available %}Mark as Booked{% else %}Mark as Available{% endif %}
                 </button>
               </form>
-              <form action="{{ url_for('delete_truck', truck_id=truck.id) }}" method="POST" class="d-inline">
+              <form action="{{ url_for('dashboard_routes.delete_truck', truck_id=truck.id) }}" method="POST"
+                class="d-inline">
                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>
               </form>
             </div>
@@ -146,12 +150,14 @@
                   {{ cargo.status }}
                 </span>
               </p>
-              <form action="{{ url_for('toggle_cargo_status', cargo_id=cargo.id) }}" method="POST" class="d-inline">
+              <form action="{{ url_for('dashboard_routes.toggle_cargo_status', cargo_id=cargo.id) }}" method="POST"
+                class="d-inline">
                 <button type="submit" class="btn btn-info btn-sm">
                   {% if cargo.status == 'Available' %}Mark as Transported{% else %}Mark as Available{% endif %}
                 </button>
               </form>
-              <form action="{{ url_for('delete_cargo', cargo_id=cargo.id) }}" method="POST" class="d-inline">
+              <form action="{{ url_for('dashboard_routes.delete_cargo', cargo_id=cargo.id) }}" method="POST"
+                class="d-inline">
                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>
               </form>
             </div>
@@ -163,7 +169,6 @@
       </div>
     </div>
   </section>
-  <!-- Truck Requests Section -->
   <h2>Truck Requests</h2>
   <table class="table">
     <thead>
@@ -182,15 +187,20 @@
         <td>{{ request.status }}</td>
         <td>
           {% if request.status == 'Pending' %}
-          <a href="{{ url_for('approve_request', request_id=request.id) }}" class="btn btn-success">Approve</a>
-          <a href="{{ url_for('decline_request', request_id=request.id) }}" class="btn btn-danger">Decline</a>
+          <!-- Approve Request -->
+          <form action="{{ url_for('dashboard_routes.approve_request', request_id=request.id) }}" method="POST">
+            <button type="submit" class="btn btn-success">Approve</button>
+          </form>
+          <!-- Decline Request -->
+          <form action="{{ url_for('dashboard_routes.decline_request', request_id=request.id) }}" method="POST">
+            <button type="submit" class="btn btn-danger">Decline</button>
+          </form>
           {% endif %}
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-
   <hr>
 
   <!-- Footer -->
