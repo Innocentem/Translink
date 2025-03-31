@@ -1,4 +1,4 @@
-Sure! Here's a simple README for your Translink project:
+![Translink Project Screenshot](https://github.com/Innocentem/translink/static/images/Capture1.PNG)
 Translink - A Seamless Cargo Transportation Platform
 Table of Contents
 Introduction
@@ -25,6 +25,7 @@ Jinja2 templating engine
 SQLite database for development
 PostgreSQL database for production
 Google Maps API for location-based services
+![Translink Project Screenshot](https://github.com/Innocentem/translink/static/images/Capture2.PNG)
 Getting Started
 1.
 Clone the repository: git clone https://github.com/Innocentem/translink.git
@@ -48,6 +49,7 @@ Migrate the database: flask db migrate
 Upgrade the database: flask db upgrade
 9.
 Run the development server: flask run
+![Translink Project Screenshot](https://github.com/Innocentem/translink/static/images/Capture3.PNG)
 Project Structure
 translink/
 ├── app/
@@ -66,8 +68,17 @@ translink/
 │   └── (database migration files)
 ├── requirements.txt
 ├── run.py
+![Translink Project Screenshot](https://github.com/Innocentem/translink/static/images/Capture4.PNG)
 Contributing
 Contributions are welcome! If you have any ideas or improvements, feel free to open an issue or submit a pull request.
+![Translink Project Screenshot](https://github.com/Innocentem/translink/static/images/Capture5.PNG)
 License
 This project is licensed under the MIT License. See the LICENSE file for more details.
 That's it! I hope this README helps you get started with your Translink project. Let me know if you have any questions or need further assistance!
+![Translink Project Screenshot](https://github.com/Innocentem/translink/static/images/Capture6.PNG)
+![Translink Project Screenshot](https://github.com/Innocentem/translink/static/images/Capture7.PNG)
+![Translink Project Screenshot](https://github.com/Innocentem/translink/static/images/Capture8.PNG)
+![Translink Project Screenshot](https://github.com/Innocentem/translink/static/images/Capture9.PNG)
+![Translink Project Screenshot](https://github.com/Innocentem/translink/static/images/Capture10.PNG)
+![Translink Project Screenshot](https://github.com/Innocentem/translink/static/images/Capture01.PNG)
+![Translink Project Screenshot](https://github.com/Innocentem/translink/static/images/Capture02.PNG)
