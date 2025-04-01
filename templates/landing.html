@@ -50,6 +50,18 @@
 	    </div>
 	  </nav>
     <!-- END nav -->
+    <div class="container mt-3">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+              {% for category, message in messages %}
+                  <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                      {{ message }}
+                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+              {% endfor %}
+          {% endif %}
+      {% endwith %}
+  </div>
     
     <div class="hero-wrap" style="background-image: url('../static/images/traffic-highway.jpg');" data-stellar-background-ratio="0.5">
       <div class="overlay"></div>
@@ -137,23 +149,33 @@
 <!-- Google Maps (external script should come before dependent script) -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVWaKrjvy3MaE7SQ74_uJiULgl1JY0H2s&sensor=false"></script>
 <script src="../static/js/google-map.js"></script>
-
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      // Flash messages auto-hide
+      const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
+      alerts.forEach(alert => {
+          setTimeout(() => {
+              alert.classList.add('fade');
+              setTimeout(() => alert.remove(), 150);
+          }, 3000);
+      });
+  });
+  </script>
 <!-- Main script (should be last to ensure everything else is loaded) -->
 <script src="../static/js/main.js"></script>
 
-<!-- Login Modal -->
+<!-- Login Modal Form -->
 <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="loginModalLabel">Login</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form method="POST">
+                <form method="POST" action="{{ url_for('auth_routes.landing') }}">
                     {{ login_form.hidden_tag() }}
+                    <input type="hidden" name="login" value="true">
                     <div class="mb-3">
                         {{ login_form.username.label(class="form-label") }}
                         {{ login_form.username(class="form-control") }}
@@ -163,28 +185,26 @@
                         {{ login_form.password(class="form-control") }}
                     </div>
                     <div class="d-grid">
-                        {{ login_form.submit(class="btn btn-primary") }}
+                        {{ login_form.submit(class="btn btn-primary w-100") }}
                     </div>
-                </form>                
+                </form>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal HTML -->
+<!-- Register Modal Form -->
 <div class="modal fade" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="registerModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="registerModalLabel">Create an Account</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- Register Form inside Modal -->
                 <form method="POST" action="{{ url_for('auth_routes.landing') }}" enctype="multipart/form-data">
                     {{ register_form.hidden_tag() }}
+                    <input type="hidden" name="register" value="true">
                     <div class="mb-3">
                         {{ register_form.username.label(class="form-label") }}
                         {{ register_form.username(class="form-control") }}
@@ -198,13 +218,17 @@
                         {{ register_form.confirm_password(class="form-control") }}
                     </div>
                     <div class="mb-3">
+                        {{ register_form.role.label(class="form-label") }}
+                        {{ register_form.role(class="form-select") }}
+                    </div>
+                    <div class="mb-3">
                         {{ register_form.avatar.label(class="form-label") }}
                         {{ register_form.avatar(class="form-control") }}
                     </div>
                     <div class="d-grid">
-                        {{ register_form.submit(class="btn btn-primary") }}
+                        {{ register_form.submit(class="btn btn-primary w-100") }}
                     </div>
-                </form>                
+                </form>
             </div>
         </div>
     </div>

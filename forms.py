@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, FloatField
+from wtforms import StringField, PasswordField, SubmitField, FloatField, SelectField
 from wtforms.validators import DataRequired, EqualTo, Length
 from flask_wtf.file import FileField, FileAllowed
 
@@ -21,9 +21,12 @@ class RegisterForm(FlaskForm):
         'Profile Picture', 
         validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Only JPG, PNG, and JPEG images are allowed!')]
     )
+    role = SelectField(
+        'Role', 
+        choices=[('truck_fleet_owner', 'Truck Fleet Owner'), ('transportation_service_user', 'Transportation Service User')],
+        validators=[DataRequired()]
+    )
     submit = SubmitField('Register')
-
-# Login Form
 class LoginForm(FlaskForm):
     username = StringField(
         'Username', 
@@ -34,11 +37,18 @@ class LoginForm(FlaskForm):
         validators=[DataRequired()]
     )
     submit = SubmitField('Login')
-
-# Truck Form
+# Truck Form (For Truck Fleet Owners)
 class TruckForm(FlaskForm):
     name = StringField(
         'Truck Name', 
+        validators=[DataRequired()]
+    )
+    plate_number = StringField(
+        'Plate Number', 
+        validators=[DataRequired()]
+    )
+    driver_name = StringField(
+        'Driver Name', 
         validators=[DataRequired()]
     )
     routes = StringField(
@@ -51,7 +61,7 @@ class TruckForm(FlaskForm):
     )
     submit = SubmitField('Post Truck')
 
-# Cargo Form
+# Cargo Form (For Transportation Service Users)
 class CargoForm(FlaskForm):
     name = StringField(
         'Cargo Name', 
@@ -68,9 +78,27 @@ class CargoForm(FlaskForm):
     destination = StringField(
         'Destination', 
         validators=[DataRequired()]
-    )  # Changed from "route" to "destination"
+    )
+    timeframe = StringField(
+        'Timeframe (e.g., Within 3 days)', 
+        validators=[DataRequired()]
+    )
     image = FileField(
         'Cargo Image', 
         validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')]
     )
     submit = SubmitField('Post Cargo')
+
+# Truck Request Form (For Booking a Truck)
+class TruckRequestForm(FlaskForm):
+    truck_id = SelectField(
+        'Select Truck', 
+        coerce=int, 
+        validators=[DataRequired()]
+    )  # This will be populated dynamically in the view
+    cargo_id = SelectField(
+        'Select Cargo', 
+        coerce=int, 
+        validators=[DataRequired()]
+    )
+    submit = SubmitField('Request Truck')
