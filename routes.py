@@ -1,13 +1,16 @@
 from flask import (
     Blueprint, render_template, redirect, url_for, 
-    flash, request, current_app
+    flash, request, current_app, send_file, make_response
 )
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from urllib.parse import urlparse, urljoin
 import os
-from models import User, Truck, TruckRequest, Cargo, CargoRequest
+from io import BytesIO, StringIO
+import csv
+from datetime import datetime, timedelta
+from models import User, Truck, TruckRequest, Cargo, CargoRequest, ActivityLog, SystemMetrics
 from forms import RegisterForm, LoginForm
 from extensions import db
 from functools import wraps
@@ -28,11 +31,9 @@ auth_routes = Blueprint('auth_routes', __name__)
 @auth_routes.route('/')
 @auth_routes.route('/landing', methods=['GET', 'POST'])
 def landing():
-    # Add debug print
-    print(f"Landing route - User authenticated: {current_user.is_authenticated}")
-    
-    # Only redirect if user is authenticated and it's a GET request
-    if current_user.is_authenticated and request.method == 'GET':
+    if request.method == 'GET' and current_user.is_authenticated:
+        if current_user.role == 'admin':
+            return redirect(url_for('admin_routes.analytics_dashboard'))
         return redirect(url_for('dashboard_routes.dashboard'))
     
     # Initialize forms
@@ -125,26 +126,33 @@ dashboard_routes = Blueprint('dashboard_routes', __name__)
 @dashboard_routes.route('/dashboard')
 @login_required
 def dashboard():
-    # Add debug print
-    print(f"Dashboard route - User: {current_user.username}, Role: {current_user.role}")
-    
     try:
-        if current_user.role == 'truck_fleet_owner':
+        print(f"Dashboard route - User: {current_user.username}, Role: {current_user.role}")
+        
+        if current_user.role == 'admin':
+            # Redirect admin users to analytics dashboard
+            return redirect(url_for('admin_routes.analytics_dashboard'))
+            
+        elif current_user.role == 'truck_fleet_owner':
             trucks = Truck.query.filter_by(user_id=current_user.id).all()
-            return render_template('dashboard.html', trucks=trucks)
+            return render_template('dashboard.html', 
+                                trucks=trucks,
+                                current_user=current_user)
             
         elif current_user.role == 'transportation_service_user':
             sent_requests = TruckRequest.query.filter_by(user_id=current_user.id).all()
-            return render_template('dashboard.html', sent_requests=sent_requests)
+            return render_template('dashboard.html', 
+                                sent_requests=sent_requests,
+                                current_user=current_user)
             
         else:
-            logout_user()  # Logout user if role is invalid
             flash('Invalid user role!', 'danger')
             return redirect(url_for('auth_routes.landing'))
             
     except Exception as e:
-        print(f"Dashboard Error: {str(e)}")  # Add error logging
-        flash(f'Error loading dashboard: {str(e)}', 'danger')
+        print(f"Dashboard Error: {str(e)}")
+        db.session.rollback()
+        flash('Error loading dashboard. Please try again.', 'danger')
         return redirect(url_for('auth_routes.landing'))
 
 @dashboard_routes.route('/add_cargo', methods=['POST'])
@@ -414,3 +422,226 @@ def debug_trucks():
             'user_id': t.user_id
         } for t in trucks]
     }
+
+admin_routes = Blueprint('admin_routes', __name__)
+
+@admin_routes.route('/admin')
+@login_required
+def admin_dashboard():
+    if current_user.role != 'admin':
+        flash('Unauthorized access!', 'danger')
+        return redirect(url_for('dashboard_routes.dashboard'))
+    
+    # Get date range for filtering
+    days = request.args.get('days', '30')  # Default to 30 days
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=int(days))
+    
+    # Gather statistics
+    stats = {
+        'total_users': User.query.count(),
+        'new_users': User.query.filter(User.created_at >= start_date).count(),
+        'total_trucks': Truck.query.count(),
+        'new_trucks': Truck.query.filter(Truck.created_at >= start_date).count(),
+        'active_requests': TruckRequest.query.filter(TruckRequest.status == 'Pending').count(),
+        'completed_requests': TruckRequest.query.filter(
+            TruckRequest.status == 'Accepted',
+            TruckRequest.request_date >= start_date
+        ).count()
+    }
+    
+    # Get recent activities
+    recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
+    recent_trucks = Truck.query.order_by(Truck.created_at.desc()).limit(5).all()
+    recent_requests = TruckRequest.query.order_by(TruckRequest.request_date.desc()).limit(5).all()
+    
+    return render_template('admin/dashboard.html',
+                         stats=stats,
+                         recent_users=recent_users,
+                         recent_trucks=recent_trucks,
+                         recent_requests=recent_requests,
+                         days=days)
+
+@admin_routes.route('/admin/report')
+@login_required
+@role_required('admin')
+def generate_report():
+    try:
+        report_type = request.args.get('report_type')
+        output = StringIO()
+        
+        # Create CSV writer with proper encoding
+        writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
+        
+        if report_type == 'activity_log':
+            # Write activity log report
+            writer.writerow(['Timestamp', 'User', 'Action', 'Details'])
+            activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).all()
+            
+            for activity in activities:
+                writer.writerow([
+                    activity.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                    activity.user.username,
+                    activity.action,
+                    activity.details
+                ])
+            filename = f'activity_log_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+            
+        elif report_type == 'system_metrics':
+            # Write system metrics report
+            writer.writerow(['Timestamp', 'Metric', 'Value'])
+            metrics = SystemMetrics.query.order_by(SystemMetrics.timestamp.desc()).all()
+            
+            for metric in metrics:
+                writer.writerow([
+                    metric.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                    metric.metric_name,
+                    metric.metric_value
+                ])
+            filename = f'system_metrics_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+            
+        else:
+            flash('Invalid report type requested', 'danger')
+            return redirect(url_for('admin_routes.analytics_dashboard'))
+
+        # Prepare the response
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+        
+        return response
+
+    except Exception as e:
+        print(f"Report Generation Error: {str(e)}")
+        flash('Error generating report', 'danger')
+        return redirect(url_for('admin_routes.analytics_dashboard'))
+
+@admin_routes.route('/analytics')
+@login_required
+@role_required('admin')
+def analytics_dashboard():
+    try:
+        # Get time period from request args (default to last 30 days)
+        days = request.args.get('days', '30')
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=int(days))
+
+        # Gather analytics data
+        analytics = {
+            'users': {
+                'total': User.query.count(),
+                'new': User.query.filter(User.created_at >= start_date).count(),
+                'by_role': {
+                    'truck_fleet_owner': User.query.filter_by(role='truck_fleet_owner').count(),
+                    'transportation_service_user': User.query.filter_by(role='transportation_service_user').count()
+                }
+            },
+            'trucks': {
+                'total': Truck.query.count(),
+                'available': Truck.query.filter_by(available=True).count(),
+                'booked': Truck.query.filter_by(available=False).count()
+            },
+            'requests': {
+                'total': TruckRequest.query.count(),
+                'pending': TruckRequest.query.filter_by(status='Pending').count(),
+                'accepted': TruckRequest.query.filter_by(status='Accepted').count(),
+                'rejected': TruckRequest.query.filter_by(status='Rejected').count()
+            }
+        }
+
+        # Get recent activities with user details
+        recent_activities = (
+            ActivityLog.query
+            .join(User)
+            .order_by(ActivityLog.timestamp.desc())
+            .limit(10)
+            .all()
+        )
+
+        # Get system metrics
+        system_metrics = SystemMetrics.get_latest_metrics()
+
+        # Calculate success rates
+        total_completed = analytics['requests']['accepted'] + analytics['requests']['rejected']
+        success_rate = (
+            (analytics['requests']['accepted'] / total_completed * 100)
+            if total_completed > 0 else 0
+        )
+
+        return render_template('admin/analytics.html',
+                             analytics=analytics,
+                             recent_activities=recent_activities,
+                             system_metrics=system_metrics,
+                             success_rate=success_rate,
+                             days=days)
+
+    except Exception as e:
+        print(f"Analytics Error: {str(e)}")
+        flash('Error loading analytics dashboard', 'danger')
+        db.session.rollback()
+        return redirect(url_for('dashboard_routes.dashboard'))
+
+@admin_routes.route('/analytics/report')
+@login_required
+def generate_analytics_report():
+    if current_user.role != 'admin':
+        flash('Unauthorized access!', 'danger')
+        return redirect(url_for('dashboard_routes.dashboard'))
+    
+    report_type = request.args.get('type', 'users')
+    start_date = request.args.get('start_date', 
+                                (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'))
+    end_date = request.args.get('end_date', datetime.now().strftime('%Y-%m-%d'))
+    
+    # Create CSV file in memory
+    output = BytesIO()
+    writer = csv.writer(output)
+    
+    if report_type == 'users':
+        # Write users report
+        writer.writerow(['Username', 'Role', 'Registration Date'])
+        users = User.query.filter(
+            User.created_at.between(start_date, end_date)
+        ).all()
+        for user in users:
+            writer.writerow([user.username, user.role, user.created_at])
+            
+    elif report_type == 'trucks':
+        # Write trucks report
+        writer.writerow(['Name', 'Plate Number', 'Owner', 'Status', 'Added Date'])
+        trucks = Truck.query.filter(
+            Truck.created_at.between(start_date, end_date)
+        ).all()
+        for truck in trucks:
+            writer.writerow([
+                truck.name, 
+                truck.plate_number, 
+                truck.owner.username,
+                'Available' if truck.available else 'Booked',
+                truck.created_at
+            ])
+            
+    elif report_type == 'requests':
+        # Write requests report
+        writer.writerow(['Date', 'Truck', 'Requester', 'Status', 'Origin', 'Destination'])
+        requests = TruckRequest.query.filter(
+            TruckRequest.request_date.between(start_date, end_date)
+        ).all()
+        for req in requests:
+            writer.writerow([
+                req.request_date,
+                req.truck.name,
+                req.requester.username,
+                req.status,
+                req.origin,
+                req.destination
+            ])
+    
+    # Prepare response
+    output.seek(0)
+    return send_file(
+        output,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=f'translink_analytics_{report_type}_{datetime.now().strftime("%Y%m%d")}.csv'
+    )

@@ -174,7 +174,7 @@
             </div>
             <div class="modal-body">
                 <form method="POST" action="{{ url_for('auth_routes.landing') }}">
-                    {{ login_form.hidden_tag() }}
+                    {{ login_form.csrf_token }}
                     <input type="hidden" name="login" value="true">
                     <div class="mb-3">
                         {{ login_form.username.label(class="form-label") }}
@@ -203,6 +203,7 @@
             </div>
             <div class="modal-body">
                 <form method="POST" action="{{ url_for('auth_routes.landing') }}" enctype="multipart/form-data">
+                    {{ register_form.csrf_token }}
                     {{ register_form.hidden_tag() }}
                     <input type="hidden" name="register" value="true">
                     <div class="mb-3">

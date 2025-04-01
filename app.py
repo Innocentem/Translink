@@ -4,7 +4,7 @@ from datetime import timedelta
 import os
 from dotenv import load_dotenv
 from extensions import db, migrate, login_manager
-from routes import auth_routes, dashboard_routes, browse_routes
+from routes import auth_routes, dashboard_routes, browse_routes, admin_routes
 from models import User
 
 load_dotenv()
@@ -72,6 +72,7 @@ def create_app():
     app.register_blueprint(auth_routes)
     app.register_blueprint(dashboard_routes)
     app.register_blueprint(browse_routes)
+    app.register_blueprint(admin_routes)
 
     # Error handlers
     @app.errorhandler(404)
