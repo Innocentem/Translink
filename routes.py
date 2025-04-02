@@ -31,10 +31,22 @@ auth_routes = Blueprint('auth_routes', __name__)
 @auth_routes.route('/')
 @auth_routes.route('/landing', methods=['GET', 'POST'])
 def landing():
+    # Handle potential redirect loops
+    if request.referrer and 'dashboard' in request.referrer:
+        flash('Session error. Please login again.', 'warning')
+        return render_template('landing.html', 
+                             register_form=RegisterForm(), 
+                             login_form=LoginForm())
+
     if request.method == 'GET' and current_user.is_authenticated:
-        if current_user.role == 'admin':
-            return redirect(url_for('admin_routes.analytics_dashboard'))
-        return redirect(url_for('dashboard_routes.dashboard'))
+        try:
+            if current_user.role == 'admin':
+                return redirect(url_for('admin_routes.analytics_dashboard'))
+            return redirect(url_for('dashboard_routes.dashboard'))
+        except Exception as e:
+            print(f"Landing Error: {str(e)}")
+            logout_user()
+            flash('Session error. Please login again.', 'warning')
     
     # Initialize forms
     register_form = RegisterForm()
@@ -129,8 +141,12 @@ def dashboard():
     try:
         print(f"Dashboard route - User: {current_user.username}, Role: {current_user.role}")
         
+        # Set default created_at if None
+        if current_user.created_at is None:
+            current_user.created_at = datetime.utcnow()
+            db.session.commit()
+        
         if current_user.role == 'admin':
-            # Redirect admin users to analytics dashboard
             return redirect(url_for('admin_routes.analytics_dashboard'))
             
         elif current_user.role == 'truck_fleet_owner':
