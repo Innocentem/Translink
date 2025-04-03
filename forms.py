@@ -41,25 +41,29 @@ class LoginForm(FlaskForm):
 class TruckForm(FlaskForm):
     name = StringField(
         'Truck Name', 
-        validators=[DataRequired()]
+        validators=[DataRequired(), Length(min=3, max=100)]
     )
     plate_number = StringField(
         'Plate Number', 
-        validators=[DataRequired()]
+        validators=[DataRequired(), Length(min=3, max=20)]
     )
     driver_name = StringField(
         'Driver Name', 
-        validators=[DataRequired()]
+        validators=[DataRequired(), Length(min=3, max=100)]
     )
     routes = StringField(
-        'Routes (Comma separated)', 
-        validators=[DataRequired()]
+        'Routes', 
+        validators=[DataRequired()],
+        description="e.g., Lagos-Abuja, Abuja-Kano"
     )
     image = FileField(
         'Truck Image', 
-        validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')]
+        validators=[
+            DataRequired(),
+            FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')
+        ]
     )
-    submit = SubmitField('Post Truck')
+    submit = SubmitField('Add Truck')
 
 # Cargo Form (For Transportation Service Users)
 class CargoForm(FlaskForm):

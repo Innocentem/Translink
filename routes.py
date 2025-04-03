@@ -11,7 +11,7 @@ from io import BytesIO, StringIO
 import csv
 from datetime import datetime, timedelta
 from models import User, Truck, TruckRequest, Cargo, CargoRequest, ActivityLog, SystemMetrics
-from forms import RegisterForm, LoginForm
+from forms import RegisterForm, LoginForm, TruckForm  # Add TruckForm import
 from extensions import db
 from functools import wraps
 
@@ -141,18 +141,12 @@ def dashboard():
     try:
         print(f"Dashboard route - User: {current_user.username}, Role: {current_user.role}")
         
-        # Set default created_at if None
-        if current_user.created_at is None:
-            current_user.created_at = datetime.utcnow()
-            db.session.commit()
-        
-        if current_user.role == 'admin':
-            return redirect(url_for('admin_routes.analytics_dashboard'))
-            
-        elif current_user.role == 'truck_fleet_owner':
+        if current_user.role == 'truck_fleet_owner':
             trucks = Truck.query.filter_by(user_id=current_user.id).all()
+            truck_form = TruckForm()  # Make sure this line is present
             return render_template('dashboard.html', 
                                 trucks=trucks,
+                                truck_form=truck_form,  # Make sure this is being passed
                                 current_user=current_user)
             
         elif current_user.role == 'transportation_service_user':
@@ -286,6 +280,62 @@ def handle_request(request_id, action):
     
     return redirect(url_for('dashboard_routes.dashboard'))
 
+@dashboard_routes.route('/add_truck', methods=['POST'])
+@login_required
+def add_truck():
+    """Add a new truck (truck fleet owners only)"""
+    if current_user.role != 'truck_fleet_owner':
+        flash('Unauthorized action!', 'danger')
+        return redirect(url_for('dashboard_routes.dashboard'))
+    
+    form = TruckForm()
+    
+    if form.validate_on_submit():
+        try:
+            # Check if plate number is unique
+            if Truck.query.filter_by(plate_number=form.plate_number.data).first():
+                flash('A truck with this plate number already exists!', 'danger')
+                return redirect(url_for('dashboard_routes.dashboard'))
+            
+            # Save image
+            image = form.image.data
+            filename = secure_filename(f"{current_user.username}_{form.plate_number.data}_{image.filename}")
+            image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            image.save(image_path)
+            
+            # Create new truck with form data
+            new_truck = Truck(
+                name=form.name.data,
+                plate_number=form.plate_number.data,
+                driver_name=form.driver_name.data,
+                routes=form.routes.data,
+                image=filename,
+                user_id=current_user.id,
+                available=True
+            )
+            
+            db.session.add(new_truck)
+            db.session.commit()
+            
+            # Log activity
+            ActivityLog.log_activity(
+                current_user.id,
+                'add_truck',
+                f'Added new truck: {form.name.data} ({form.plate_number.data})'
+            )
+            
+            flash('Truck added successfully!', 'success')
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error adding truck: {str(e)}', 'danger')
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f'{field}: {error}', 'danger')
+    
+    return redirect(url_for('dashboard_routes.dashboard'))
+
 # Create a new Blueprint for browse routes
 browse_routes = Blueprint('browse_routes', __name__)
 
@@ -364,65 +414,6 @@ def request_truck(truck_id):
         flash(f'Error requesting truck: {str(e)}', 'danger')
         
     return redirect(url_for('browse_routes.browse'))
-
-@dashboard_routes.route('/add_truck', methods=['POST'])
-@login_required
-def add_truck():
-    """Add a new truck (truck fleet owners only)"""
-    if current_user.role != 'truck_fleet_owner':
-        flash('Unauthorized action!', 'danger')
-        return redirect(url_for('dashboard_routes.dashboard'))
-    
-    try:
-        if 'image' not in request.files:
-            flash('No image file provided', 'danger')
-            return redirect(url_for('dashboard_routes.dashboard'))
-        
-        image = request.files['image']
-        if image.filename == '':
-            flash('No selected file', 'danger')
-            return redirect(url_for('dashboard_routes.dashboard'))
-        
-        # Validate required fields
-        name = request.form.get('name')
-        plate_number = request.form.get('plate_number')
-        driver_name = request.form.get('driver_name')
-        routes = request.form.get('routes')
-        
-        if not all([name, plate_number, driver_name]):
-            flash('All fields are required', 'danger')
-            return redirect(url_for('dashboard_routes.dashboard'))
-        
-        # Check if plate number is unique
-        if Truck.query.filter_by(plate_number=plate_number).first():
-            flash('A truck with this plate number already exists!', 'danger')
-            return redirect(url_for('dashboard_routes.dashboard'))
-        
-        # Save image
-        filename = secure_filename(f"{current_user.username}_{plate_number}_{image.filename}")
-        image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        image.save(image_path)
-        
-        # Create new truck with all required fields
-        new_truck = Truck(
-            name=name,
-            plate_number=plate_number,
-            driver_name=driver_name,
-            routes=routes,
-            image=filename,
-            user_id=current_user.id,
-            available=True
-        )
-        
-        db.session.add(new_truck)
-        db.session.commit()
-        flash('Truck added successfully!', 'success')
-        
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Error adding truck: {str(e)}', 'danger')
-    
-    return redirect(url_for('dashboard_routes.dashboard'))
 
 @browse_routes.route('/debug/trucks')
 def debug_trucks():

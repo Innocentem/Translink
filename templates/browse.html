@@ -7,79 +7,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Fonts and Stylesheets -->
-    <!-- Keep only these CSS imports in the head section -->
     <link href="https://fonts.googleapis.com/css?family=Poppins:200,300,400,500,600,700,800&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/open-iconic-bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/animate.css">
+    <link rel="stylesheet" href="../static/css/owl.carousel.min.css">
+    <link rel="stylesheet" href="../static/css/owl.theme.default.min.css">
+    <link rel="stylesheet" href="../static/css/magnific-popup.css">
+    <link rel="stylesheet" href="../static/css/aos.css">
+    <link rel="stylesheet" href="../static/css/ionicons.min.css">
+    <link rel="stylesheet" href="../static/css/bootstrap-datepicker.css">
+    <link rel="stylesheet" href="../static/css/jquery.timepicker.css">
+    <link rel="stylesheet" href="../static/css/flaticon.css">
+    <link rel="stylesheet" href="../static/css/icomoon.css">
     <link rel="stylesheet" href="../static/css/style.css">
-    <style>
-        .hover-shadow {
-            transition: all 0.3s ease;
-        }
-
-        .hover-shadow:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
-        }
-
-        .card {
-            border: none;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .badge {
-            font-size: 0.8rem;
-            padding: 0.5em 1em;
-        }
-
-        .search-section {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: -50px;
-            position: relative;
-            z-index: 1000;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .card-img-top {
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-        }
-    </style>
 </head>
 
 <body>
-   <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
-    <div class="container">
-        <a class="navbar-brand" href="{{ url_for('auth_routes.landing') }}">Trans<span>Link</span></a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ftco-nav" 
-                aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+    <!-- Navbar Section -->
+    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('auth_routes.landing') }}">Trans<span>Link</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ftco-nav" 
+                    aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-        <div class="collapse navbar-collapse" id="ftco-nav">
-            <ul class="navbar-nav ms-auto">
-                {% if current_user.role == 'admin' %}
-                <li class="nav-item">
-                    <a href="{{ url_for('admin_routes.analytics_dashboard') }}" class="nav-link">
-                        Analytics Dashboard
-                    </a>
-                </li>
-                {% endif %}
-                <li class="nav-item">
-                    <a href="{{ url_for('dashboard_routes.dashboard') }}" class="nav-link">Back to dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ url_for('auth_routes.logout') }}" class="nav-link">Logout</a>
-                </li>
-            </ul>
+            <div class="collapse navbar-collapse" id="ftco-nav">
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user.role == 'admin' %}
+                    <li class="nav-item">
+                        <a href="{{ url_for('admin_routes.analytics_dashboard') }}" class="nav-link">
+                            Analytics Dashboard
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a href="{{ url_for('dashboard_routes.dashboard') }}" class="nav-link">Back to dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('auth_routes.logout') }}" class="nav-link">Logout</a>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </div>
-</nav>
-    <!-- END Navbar -->
+    </nav>
+
+    <!-- Flash Messages -->
     <div class="container mt-3">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -92,74 +66,91 @@
         {% endif %}
         {% endwith %}
     </div>
+
     <!-- Hero Section -->
-    <section class="hero-wrap hero-wrap-2 js-fullheight"
-        style="background-image: url('../static/images/request.jpg');" data-stellar-background-ratio="0.5">
+    <div class="hero-wrap ftco-degree-bg" style="background-image: url('../static/images/request.jpg');" data-stellar-background-ratio="0.5">
         <div class="overlay"></div>
         <div class="container">
-            <div class="row no-gutters slider-text js-fullheight align-items-end justify-content-start">
-                <div class="col-md-9 ftco-animate pb-5">
-                    <p class="breadcrumbs"><span class="mr-2"><a href="#">Home <i
-                                    class="ion-ios-arrow-forward"></i></a></span> <span>Browse <i
-                                class="ion-ios-arrow-forward"></i></span></p>
-                    <h1 class="mb-3 bread">Browse Trucks and Cargo</h1>
+            <div class="row no-gutters slider-text justify-content-start align-items-center justify-content-center">
+                <div class="col-lg-8 ftco-animate">
+                    <div class="text w-100 text-center mb-md-5 pb-md-5">
+                        <h1 class="mb-4">Find the Perfect Truck for Your Cargo</h1>
+                        <p>Connecting cargo owners with reliable truck fleet owners</p>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
 
-    </section>
-    <!-- Replace existing search section -->
-    <section class="search-section">
+    <!-- Search Section -->
+    <section class="ftco-section ftco-no-pt bg-light">
         <div class="container">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <form method="GET" action="{{ url_for('browse_routes.browse') }}" class="row g-3">
-                        <div class="col-md-3">
-                            <input type="text" name="search" class="form-control" placeholder="Search by name"
-                                value="{{ request.args.get('search', '') }}">
+            <div class="row no-gutters">
+                <div class="col-md-12 featured-top">
+                    <div class="row no-gutters">
+                        <div class="col-md-12 d-flex align-items-center">
+                            <div class="services-wrap rounded-right w-100">
+                                <h3 class="heading-section mb-4">Find Your Perfect Transport Solution</h3>
+                                <div class="row d-flex mb-4">
+                                    <div class="col-lg align-items-end">
+                                        <div class="form-group">
+                                            <label for="#">Cargo Type</label>
+                                            <div class="form-field">
+                                                <div class="select-wrap">
+                                                    <div class="icon"><span class="ion-ios-arrow-down"></span></div>
+                                                    <select name="" id="" class="form-control">
+                                                        <option value="">Select Type</option>
+                                                        <option value="">Perishable</option>
+                                                        <option value="">Non-Perishable</option>
+                                                        <option value="">Fragile</option>
+                                                        <option value="">Heavy Machinery</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg align-items-end">
+                                        <div class="form-group">
+                                            <label for="#">Truck Type</label>
+                                            <div class="form-field">
+                                                <div class="select-wrap">
+                                                    <div class="icon"><span class="ion-ios-arrow-down"></span></div>
+                                                    <select name="" id="" class="form-control">
+                                                        <option value="">Any Type</option>
+                                                        <option value="">Flatbed</option>
+                                                        <option value="">Box Truck</option>
+                                                        <option value="">Refrigerated</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg align-self-end">
+                                        <div class="form-group">
+                                            <div class="form-field">
+                                                <input type="submit" value="Search" class="form-control btn btn-primary">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <select name="status" class="form-select">
-                                <option value="">All Status</option>
-                                <option value="Available" {% if request.args.get('status')=='Available' %}selected{%
-                                    endif %}>
-                                    Available Only
-                                </option>
-                                <option value="Booked" {% if request.args.get('status')=='Booked' %}selected{% endif %}>
-                                    Booked Only
-                                </option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <select name="sort" class="form-select">
-                                <option value="newest" {% if request.args.get('sort')=='newest' %}selected{% endif %}>
-                                    Newest First
-                                </option>
-                                <option value="oldest" {% if request.args.get('sort')=='oldest' %}selected{% endif %}>
-                                    Oldest First
-                                </option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="icon-search"></i> Search
-                            </button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Replace existing Trucks Section -->
-    <section class="ftco-section">
+    <!-- Available Trucks Section -->
+    <section class="ftco-section ftco-cart">
         <div class="container">
             <div class="row justify-content-center mb-5">
                 <div class="col-md-7 text-center heading-section ftco-animate">
-                    <h2 class="mb-4">Available Trucks</h2>
+                    <span class="subheading">Available Vehicles</span>
+                    <h2 class="mb-3">Our Available Trucks</h2>
                 </div>
             </div>
-            <div class="row d-flex">
+            <div class="row">
                 {% if trucks and trucks.items %}
                 {% for truck in trucks.items %}
                 <div class="col-md-4 mb-4">
@@ -203,39 +194,90 @@
                 </div>
                 {% endif %}
             </div>
+            <!-- Pagination for Trucks -->
+            <nav aria-label="Page navigation" class="my-4">
+                <ul class="pagination justify-content-center">
+                    {% if trucks.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="{{ url_for('browse_routes.browse', truck_page=trucks.prev_num, search=search, status=status) }}">
+                            Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for page in range(1, trucks.pages + 1) %}
+                    <li class="page-item {% if page == trucks.page %}active{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('browse_routes.browse', truck_page=page, search=search, status=status) }}">
+                            {{ page }}
+                        </a>
+                    </li>
+                    {% endfor %}
+
+                    {% if trucks.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="{{ url_for('browse_routes.browse', truck_page=trucks.next_num, search=search, status=status) }}">
+                            Next
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
         </div>
     </section>
-    <!-- Pagination for Trucks -->
-    <nav aria-label="Page navigation" class="my-4">
-        <ul class="pagination justify-content-center">
-            {% if trucks.has_prev %}
-            <li class="page-item">
-                <a class="page-link"
-                    href="{{ url_for('browse_routes.browse', truck_page=trucks.prev_num, search=search, status=status) }}">
-                    Previous
-                </a>
-            </li>
-            {% endif %}
 
-            {% for page in range(1, trucks.pages + 1) %}
-            <li class="page-item {% if page == trucks.page %}active{% endif %}">
-                <a class="page-link"
-                    href="{{ url_for('browse_routes.browse', truck_page=page, search=search, status=status) }}">
-                    {{ page }}
-                </a>
-            </li>
-            {% endfor %}
-
-            {% if trucks.has_next %}
-            <li class="page-item">
-                <a class="page-link"
-                    href="{{ url_for('browse_routes.browse', truck_page=trucks.next_num, search=search, status=status) }}">
-                    Next
-                </a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
+    <!-- Cargo Section -->
+    <section class="ftco-section bg-light">
+        <div class="container">
+            <div class="row justify-content-center mb-5">
+                <div class="col-md-7 text-center heading-section ftco-animate">
+                    <span class="subheading">Cargo</span>
+                    <h2 class="mb-3">Available Cargo</h2>
+                </div>
+            </div>
+            <div class="row d-flex justify-content-center">
+                {% for cargo in cargos %}
+                <div class="col-md-6 col-lg-4 mb-4 d-flex ftco-animate">
+                    <div class="card shadow-sm">
+                        <div class="card-img-top"
+                            style="background-image: url('{{ url_for('static', filename='uploads/' + cargo.image) }}'); height: 200px; background-size: cover; background-position: center;">
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ cargo.name }}</h5>
+                            <p class="card-text">Route: {{ cargo.origin }} to {{ cargo.destination }}</p>
+                            <p class="card-text">Weight: {{ cargo.weight }} kg</p>
+                            <p>
+                                {% if cargo.status == 'Available' %}
+                                <span class="badge bg-success">Available for transportation</span>
+                                {% else %}
+                                <span class="badge bg-danger">Transported</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <!-- Pagination for Cargo -->
+            <nav aria-label="Cargo Pagination" class="pagination-container">
+                <ul class="pagination">
+                    {% if cargos.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="{{ url_for('browse_routes.browse', cargo_page=cargos.prev_num) }}">Previous</a>
+                    </li>
+                    {% endif %}
+                    {% if cargos.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('browse_routes.browse', cargo_page=cargos.next_num) }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </section>
 
     <!-- Request Truck Modals -->
     {% if current_user.role == 'transportation_service_user' %}
@@ -274,75 +316,6 @@
         {% endfor %}
     {% endif %}
 
-    <!-- Cargo Section -->
-    <section class="ftco-section">
-        <div class="container">
-            <div class="row justify-content-center mb-5">
-                <div class="col-md-7 text-center heading-section ftco-animate">
-                    <h2 class="mb-4">Cargo</h2>
-                </div>
-            </div>
-            <div class="row d-flex justify-content-center">
-                {% for cargo in cargos %}
-                <div class="col-md-6 col-lg-4 mb-4 d-flex ftco-animate">
-                    <div class="card shadow-sm">
-                        <div class="card-img-top"
-                            style="background-image: url('{{ url_for('static', filename='uploads/' + cargo.image) }}'); height: 200px; background-size: cover; background-position: center;">
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title">{{ cargo.name }}</h5>
-                            <p class="card-text">Route: {{ cargo.origin }} to {{ cargo.destination }}</p>
-                            <p class="card-text">Weight: {{ cargo.weight }} kg</p>
-                            <p>
-                                {% if cargo.status == 'Available' %}
-                                <span class="badge bg-success">Available for transportation</span>
-                                {% else %}
-                                <span class="badge bg-danger">Transported</span>
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </section>
-    <!-- Cargo Section -->
-    <!-- Pagination for Cargo -->
-    <nav aria-label="Cargo Pagination" class="pagination-container">
-        <ul class="pagination">
-            {% if cargos.has_prev %}
-            <li class="page-item">
-                <a class="page-link"
-                    href="{{ url_for('browse_routes.browse', cargo_page=cargos.prev_num) }}">Previous</a>
-            </li>
-            {% endif %}
-            {% if cargos.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="{{ url_for('browse_routes.browse', cargo_page=cargos.next_num) }}">Next</a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
-    <!-- Pagination for Cargo -->
-    <nav aria-label="Cargo Pagination" class="pagination-container">
-        <ul class="pagination">
-            {% if cargos.has_prev %}
-            <li class="page-item">
-                <a class="page-link"
-                    href="{{ url_for('browse_routes.browse', cargo_page=cargos.prev_num) }}">Previous</a>
-            </li>
-            {% endif %}
-            {% if cargos.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="{{ url_for('browse_routes.browse', cargo_page=cargos.next_num) }}">Next</a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
-    </div>
-    </section>
-
     <!-- Footer -->
     <footer class="ftco-footer ftco-bg-dark ftco-section">
         <div class="container">
@@ -350,21 +323,35 @@
                 <div class="col-md">
                     <div class="ftco-footer-widget mb-4">
                         <h2 class="ftco-heading-2">About TransLink</h2>
-                        <p>TransLink is your trusted partner in seamless cargo transportation. We connect shippers with
-                            reliable truck drivers, making it easier to transport goods efficiently and affordably.</p>
+                        <p>Your trusted partner in seamless cargo transportation.</p>
+                    </div>
+                </div>
+                <div class="col-md">
+                    <div class="ftco-footer-widget mb-4 ml-md-5">
+                        <h2 class="ftco-heading-2">Quick Links</h2>
+                        <ul class="list-unstyled">
+                            <li><a href="{{ url_for('dashboard_routes.dashboard') }}" class="py-2 d-block">Dashboard</a></li>
+                            <li><a href="{{ url_for('auth_routes.logout') }}" class="py-2 d-block">Logout</a></li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
     </footer>
 
-    <!-- Scripts -->
-    <!-- Essential Scripts -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- loader -->
+    <div id="ftco-loader" class="show fullscreen">
+        <svg class="circular" width="48px" height="48px">
+            <circle class="path-bg" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke="#eeeeee"/>
+            <circle class="path" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke-miterlimit="10" stroke="#F96D00"/>
+        </svg>
+    </div>
 
-    <!-- Utility libraries -->
+    <!-- Scripts -->
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/js/jquery-migrate-3.0.1.min.js"></script>
+    <script src="../static/js/popper.min.js"></script>
+    <script src="../static/js/bootstrap.min.js"></script>
     <script src="../static/js/jquery.easing.1.3.js"></script>
     <script src="../static/js/jquery.waypoints.min.js"></script>
     <script src="../static/js/jquery.stellar.min.js"></script>
@@ -373,40 +360,9 @@
     <script src="../static/js/aos.js"></script>
     <script src="../static/js/jquery.animateNumber.min.js"></script>
     <script src="../static/js/bootstrap-datepicker.js"></script>
+    <script src="../static/js/jquery.timepicker.min.js"></script>
     <script src="../static/js/scrollax.min.js"></script>
-    <script>
-        // Initialize Bootstrap components
-        document.addEventListener('DOMContentLoaded', function() {
-            // Enable all tooltips
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl)
-            });
-    
-            // Enable all popovers
-            var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-            var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-                return new bootstrap.Popover(popoverTriggerEl)
-            });
-        });
-    </script>
-    <!-- Custom Scripts -->
     <script src="../static/js/main.js"></script>
-
-    <!-- Add this script at the end -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Test if modals are working
-            const buttons = document.querySelectorAll('[data-bs-toggle="modal"]');
-            buttons.forEach(button => {
-                button.addEventListener('click', function () {
-                    const targetModal = this.getAttribute('data-bs-target');
-                    const modal = new bootstrap.Modal(document.querySelector(targetModal));
-                    modal.show();
-                });
-            });
-        });
-    </script>
 </body>
 
 </html>
