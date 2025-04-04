@@ -56,23 +56,6 @@
             background: #f8b739;
         }
 
-        .hero-wrap-2 {
-            position: relative;
-            background-size: cover;
-            background-position: center center;
-            margin-bottom: 3rem;
-            min-height: 600px;
-        }
-
-        .hero-wrap-2 .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            opacity: 0.8;
-        }
-
         .user-profile {
             position: relative;
             z-index: 2;
@@ -94,7 +77,7 @@
         }
 
         .user-info {
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            text-shadow: 2px 2px 4px rgba(250, 184, 4, 0.829);
         }
 
         .user-info h1 {
@@ -111,57 +94,50 @@
             color: #f8b739;
         }
 
-        .request-form {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 8px;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
-            padding: 30px;
-        }
-
-        .request-form h2 {
-            color: #000;
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 30px;
-        }
-
-        .request-form .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .request-form .form-control {
-            height: 45px;
-            background: #fff;
-            color: #000;
-            font-size: 14px;
-            border-radius: 4px;
-            box-shadow: none;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .request-form .form-control:focus {
-            border-color: #01d28e;
-        }
-
-        .request-form label.label {
-            color: #000;
-            font-size: 12px;
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .request-form .btn-primary {
-            background: #01d28e;
-            border: none;
-            color: #fff;
-            padding: 15px 30px;
-            font-size: 16px;
+        .btn-primary {
             transition: all 0.3s ease;
         }
 
-        .request-form .btn-primary:hover {
-            background: #00b377;
+        @media (max-width: 991.98px) {
+            .hero-wrap-2 {
+                min-height: auto;
+                padding: 4rem 0;
+            }
+
+            .request-form {
+                margin-top: 2rem;
+            }
+
+            .user-profile {
+                text-align: center;
+                padding: 1rem;
+            }
+
+            .user-info h1 {
+                font-size: 2rem;
+            }
+
+            .avatar-container {
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .request-form {
+                padding: 1.5rem;
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            .user-info h1 {
+                font-size: 1.75rem;
+            }
+
+            .hero-wrap-2 {
+                min-height: unset;
+            }
         }
     </style>
 </head>
@@ -170,7 +146,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('auth_routes.landing') }}">Trans<span>Link</span></a>
+            <a class="navbar-brand" href="{{ url_for('auth_routes.landing') }}">User <span>dashboard</span></a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav">
                 <span class="oi oi-menu"></span> Menu
             </button>
@@ -191,110 +167,82 @@
             </div>
         </div>
     </nav>
-
-    <!-- Flash Messages -->
-    <div class="container mt-3">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-    </div>
     <!-- Hero Section -->
-    <section class="hero-wrap hero-wrap-2" style="background-image: url('../static/images/traffic-highway.jpg');">
+    <div class="hero-wrap" style="background-image: url('../static/images/traffic-highway.jpg');" data-stellar-background-ratio="0.5">
         <div class="overlay"></div>
         <div class="container">
-            <div class="row no-gutters">
-                <!-- User Profile Info -->
-                <div class="col-lg-6 ftco-animate">
-                    <div class="text text-white mt-5">
+            <div class="row no-gutters slider-text justify-content-start align-items-center">
+                <div class="col-lg-6 col-md-6 ftco-animate d-flex align-items-end">
+                    <div class="text">
                         <div class="user-profile">
                             <!-- User Avatar -->
-                            <div class="avatar-container mb-4">
-                                {% if current_user.avatar %}
-                                    <img src="{{ url_for('static', filename='uploads/' + current_user.avatar) }}"
-                                         alt="{{ current_user.username }}'s Avatar"
-                                         class="rounded-circle border border-4 border-white shadow-lg"
-                                         style="width: 150px; height: 150px; object-fit: cover;">
-                                {% else %}
-                                    <img src="{{ url_for('static', filename='uploads/default_avatar.jpg') }}"
-                                         alt="Default Avatar"
-                                         class="rounded-circle border border-4 border-white shadow-lg"
-                                         style="width: 150px; height: 150px; object-fit: cover;">
-                                {% endif %}
-                            </div>
+                            {% if current_user.avatar %}
+                                <img src="{{ url_for('static', filename='uploads/' + current_user.avatar) }}"
+                                     alt="{{ current_user.username }}'s Avatar"
+                                     class="rounded-circle border border-4 border-white shadow"
+                                     style="width: 100px; height: 100px; object-fit: cover; margin-bottom: 20px;">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='uploads/default_avatar.jpg') }}"
+                                     alt="Default Avatar"
+                                     class="rounded-circle border border-4 border-white shadow"
+                                     style="width: 100px; height: 100px; object-fit: cover; margin-bottom: 20px;">
+                            {% endif %}
                             
-                            <!-- User Info -->
-                            <div class="user-info">
-                                <h1 class="mb-4">Welcome, {{ current_user.username }}!</h1>
-                                <p class="mb-2">{{ current_user.role|replace('_', ' ')|title }}</p>
-                                {% if current_user.created_at %}
-                                    <p>Member since {{ current_user.created_at.strftime('%B %Y') }}</p>
-                                {% endif %}
-                            </div>
+                            <h1 class="mb-4">{{ current_user.username }}</h1>
+                            <p>{{ current_user.role|replace('_', ' ')|title }}</p>
+                            {% if current_user.created_at %}
+                                <p>Member since {{ current_user.created_at.strftime('%B %Y') }}</p>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
 
-                <!-- Add Truck Form (Only for fleet owners) -->
                 {% if current_user.role == 'truck_fleet_owner' %}
-                <div class="col-lg-5 offset-lg-1 ftco-animate">
-                    <div class="request-form p-4 mt-5">
-                        <form action="{{ url_for('dashboard_routes.add_truck') }}" 
-                              method="POST" 
-                              enctype="multipart/form-data" 
-                              id="addTruckForm">
-                            {{ truck_form.csrf_token }}
-                            
-                            <h2>Add New Truck</h2>
-                            
-                            <div class="form-group">
-                                <label class="label">Truck Name</label>
-                                {{ truck_form.name(class="form-control", placeholder="Enter truck name") }}
-                            </div>
+                <div class="col-lg-2 col"></div>
+                <div class="col-lg-4 col-md-6 mt-0 mt-md-5 d-flex">
+                    <form action="{{ url_for('dashboard_routes.add_truck') }}" 
+                          method="POST" 
+                          enctype="multipart/form-data" 
+                          class="request-form ftco-animate">
+                        {{ truck_form.csrf_token }}
+                        
+                        <h2>Add New Truck</h2>
+                        
+                        <div class="form-group">
+                            <label for="" class="label">Truck Name</label>
+                            {{ truck_form.name(class="form-control", placeholder="Enter truck name") }}
+                        </div>
 
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label class="label">Plate Number</label>
-                                        {{ truck_form.plate_number(class="form-control", placeholder="Enter plate number") }}
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label class="label">Driver Name</label>
-                                        {{ truck_form.driver_name(class="form-control", placeholder="Enter driver name") }}
-                                    </div>
-                                </div>
+                        <div class="d-flex">
+                            <div class="form-group mr-2">
+                                <label for="" class="label">Plate Number</label>
+                                {{ truck_form.plate_number(class="form-control", placeholder="Enter plate number") }}
                             </div>
+                            <div class="form-group ml-2">
+                                <label for="" class="label">Driver Name</label>
+                                {{ truck_form.driver_name(class="form-control", placeholder="Enter driver name") }}
+                            </div>
+                        </div>
 
-                            <div class="form-group">
-                                <label class="label">Routes</label>
-                                {{ truck_form.routes(class="form-control", placeholder="e.g., Lagos-Abuja, Abuja-Kano") }}
-                            </div>
+                        <div class="form-group">
+                            <label for="" class="label">Routes</label>
+                            {{ truck_form.routes(class="form-control", placeholder="e.g., Lagos-Abuja, Abuja-Kano") }}
+                        </div>
 
-                            <div class="form-group">
-                                <label class="label">Truck Image</label>
-                                {{ truck_form.image(class="form-control") }}
-                            </div>
+                        <div class="form-group">
+                            <label for="" class="label">Truck Image</label>
+                            {{ truck_form.image(class="form-control") }}
+                        </div>
 
-                            <div class="form-group">
-                                <button type="submit" class="btn btn-primary py-3 px-4 w-100">
-                                    Add to Fleet
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary py-3 px-4 w-100">Add to Fleet</button>
+                        </div>
+                    </form>
                 </div>
                 {% endif %}
             </div>
         </div>
-    </section>
+    </div>
     <!-- Stats Section -->
     <section class="ftco-section bg-light py-4">
         <div class="container">
@@ -425,70 +373,8 @@
         </div>
     </section>
 
-    <!-- Pending Requests Section -->
+    <!-- Consolidated Requests Section -->
     <section class="ftco-section bg-light">
-        <div class="container">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h2 class="section-title">Pending Truck Requests</h2>
-                </div>
-            </div>
-
-            <div class="row">
-                {% set has_requests = false %}
-                {% for truck in current_user.trucks %}
-                {% for request in truck.truck_requests %}
-                {% if request.status == 'Pending' %}
-                {% set has_requests = true %}
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm hover-shadow">
-                        <div class="card-body">
-                            <h5 class="card-title">Request for {{ truck.name }}</h5>
-                            <p class="card-text">
-                                <strong>From:</strong> {{ request.origin }}<br>
-                                <strong>To:</strong> {{ request.destination }}<br>
-                                <strong>Requester:</strong> {{ request.requester.username }}<br>
-                                <strong>Date:</strong> {{ request.request_date.strftime('%Y-%m-%d %H:%M') }}<br>
-                                <strong>Status:</strong>
-                                <span class="badge bg-warning">{{ request.status }}</span>
-                            </p>
-                            {% if request.cargo_details %}
-                            <p class="card-text">
-                                <strong>Cargo Details:</strong><br>
-                                {{ request.cargo_details }}
-                            </p>
-                            {% endif %}
-                            <div class="mt-3">
-                                <form
-                                    action="{{ url_for('dashboard_routes.handle_request', request_id=request.id, action='accept') }}"
-                                    method="POST" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-success btn-sm">
-                                        <i class="icon-check"></i> Accept
-                                    </button>
-                                </form>
-                                <form
-                                    action="{{ url_for('dashboard_routes.handle_request', request_id=request.id, action='reject') }}"
-                                    method="POST" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-danger btn-sm">
-                                        <i class="icon-close"></i> Reject
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-                {% endfor %}
-                {% endfor %}
-
-            </div>
-        </div>
-    </section>
-
-    <!-- All Requests Section -->
-    <section class="ftco-section">
         <div class="container">
             <div class="row mb-4">
                 <div class="col-12">
@@ -499,76 +385,108 @@
             <div class="row">
                 {% set has_requests = false %}
                 {% for truck in current_user.trucks %}
-                {% for request in truck.truck_requests %}
-                {% set has_requests = true %}
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm hover-shadow">
-                        <div class="card-body">
-                            <h5 class="card-title">Request for {{ truck.name }}</h5>
-                            <p class="card-text">
-                                <strong>From:</strong> {{ request.origin }}<br>
-                                <strong>To:</strong> {{ request.destination }}<br>
-                                <strong>Requester:</strong> {{ request.requester.username }}<br>
-                                <strong>Date:</strong> {{ request.request_date.strftime('%Y-%m-%d %H:%M') }}<br>
-                                <strong>Status:</strong>
-                                <span class="badge 
-                                                {% if request.status == 'Pending' %}bg-warning
-                                                {% elif request.status == 'Accepted' %}bg-success
-                                                {% else %}bg-danger{% endif %}">
-                                    {{ request.status }}
-                                </span>
-                            </p>
-                            {% if request.cargo_details %}
-                            <p class="card-text">
-                                <strong>Cargo Details:</strong><br>
-                                {{ request.cargo_details }}
-                            </p>
-                            {% endif %}
-                            {% if request.status == 'Pending' %}
-                            <div class="mt-3">
-                                <form
-                                    action="{{ url_for('dashboard_routes.handle_request', request_id=request.id, action='accept') }}"
-                                    method="POST" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-success btn-sm">
-                                        <i class="icon-check"></i> Accept
-                                    </button>
-                                </form>
-                                <form
-                                    action="{{ url_for('dashboard_routes.handle_request', request_id=request.id, action='reject') }}"
-                                    method="POST" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-danger btn-sm">
-                                        <i class="icon-close"></i> Reject
-                                    </button>
-                                </form>
+                    {% for request in truck.truck_requests|sort(attribute='request_date', reverse=true) %}
+                        {% set has_requests = true %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card border-0 shadow-sm hover-shadow h-100">
+                                {% if request.cargo_image %}
+                                    <img src="{{ url_for('static', filename='uploads/' + request.cargo_image) }}" 
+                                         class="card-img-top" 
+                                         alt="Cargo Image"
+                                         style="height: 200px; object-fit: cover;">
+                                {% endif %}
+                                <div class="card-header bg-transparent border-bottom-0 pb-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="card-title mb-0">{{ truck.name }}</h5>
+                                        <span class="badge rounded-pill 
+                                            {% if request.status == 'Pending' %}bg-warning
+                                            {% elif request.status == 'Accepted' %}bg-success
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ request.status }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="card-body pt-3">
+                                    <div class="list-group list-group-flush">
+                                        <div class="list-group-item border-0 px-0">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <i class="icon-user me-2"></i>
+                                                <small class="text-muted">Requester</small>
+                                            </div>
+                                            <strong>{{ request.requester.username }}</strong>
+                                        </div>
+                                        <div class="list-group-item border-0 px-0">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <i class="icon-map-marker me-2"></i>
+                                                <small class="text-muted">Route</small>
+                                            </div>
+                                            <strong>From:</strong> {{ request.origin }}<br>
+                                            <strong>To:</strong> {{ request.destination }}
+                                        </div>
+                                        {% if request.cargo_details %}
+                                            <div class="list-group-item border-0 px-0">
+                                                <div class="d-flex align-items-center mb-1">
+                                                    <i class="icon-box me-2"></i>
+                                                    <small class="text-muted">Cargo Details</small>
+                                                </div>
+                                                {{ request.cargo_details }}
+                                            </div>
+                                        {% endif %}
+                                        <div class="list-group-item border-0 px-0">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <i class="icon-calendar me-2"></i>
+                                                <small class="text-muted">Request Date</small>
+                                            </div>
+                                            {{ request.request_date.strftime('%B %d, %Y %H:%M') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if request.status == 'Pending' %}
+                                    <div class="card-footer bg-transparent border-0">
+                                        <div class="d-flex gap-2">
+                                            <form action="{{ url_for('dashboard_routes.handle_request', request_id=request.id, action='accept') }}"
+                                                  method="POST" class="flex-fill">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="btn btn-success w-100">
+                                                    <i class="icon-check me-2"></i>Accept
+                                                </button>
+                                            </form>
+                                            <form action="{{ url_for('dashboard_routes.handle_request', request_id=request.id, action='reject') }}"
+                                                  method="POST" class="flex-fill">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="btn btn-danger w-100">
+                                                    <i class="icon-close me-2"></i>Decline
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                {% endif %}
                             </div>
-                            {% endif %}
                         </div>
-                    </div>
-                </div>
-                {% endfor %}
+                    {% endfor %}
                 {% endfor %}
 
                 {% if not has_requests %}
-                <div class="col-12 text-center py-5">
-                    <div class="empty-state">
-                        <i class="icon-bell display-1 text-muted mb-3"></i>
-                        <h3>No Requests</h3>
-                        <p class="text-muted">You don't have any truck requests at the moment.</p>
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center py-5">
+                                <i class="icon-bell display-1 text-muted mb-3"></i>
+                                <h3>No Requests</h3>
+                                <p class="text-muted mb-0">You don't have any truck requests at the moment.</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
                 {% endif %}
             </div>
         </div>
     </section>
     {% else %}
-    <!-- Cargo Section -->
+    <!-- Transportation User's Requests Section -->
     <section class="ftco-section">
         <div class="container">
             <div class="row mb-4">
                 <div class="col-12 d-flex justify-content-between align-items-center">
-                    <h2 class="section-title">Your Cargo Requests</h2>
+                    <h2 class="section-title">Your Requests</h2>
                     <a href="{{ url_for('browse_routes.browse') }}" class="btn btn-primary">
                         <i class="icon-search"></i> Find Available Trucks
                     </a>
@@ -576,139 +494,159 @@
             </div>
 
             <div class="row">
-                {% if current_user.cargo_requests %}
-                {% for request in current_user.cargo_requests %}
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm hover-shadow">
-                        <div class="card-body">
-                            <h5 class="card-title">Request #{{ request.id }}</h5>
-                            <p class="card-text">
-                                <strong>From:</strong> {{ request.origin }}<br>
-                                <strong>To:</strong> {{ request.destination }}<br>
-                                <strong>Status:</strong>
-                                <span class="badge {% if request.status == 'Pending' %}bg-warning
-                                                       {% elif request.status == 'Accepted' %}bg-success
-                                                       {% else %}bg-danger{% endif %}">
-                                    {{ request.status }}
-                                </span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-                {% else %}
-                <div class="col-12 text-center py-5">
-                    <div class="empty-state">
-                        <i class="icon-box display-1 text-muted mb-3"></i>
-                        <h3>No Cargo Requests Yet</h3>
-                        <p class="text-muted">Start by finding available trucks for your cargo.</p>
-                        <a href="{{ url_for('browse_routes.browse') }}" class="btn btn-primary mt-3">
-                            <i class="icon-search"></i> Browse Available Trucks
-                        </a>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </section>
-
-    <!-- Transportation User Requests Section -->
-    <section class="ftco-section bg-light">
-        <div class="container">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h2 class="section-title">
-                        {% if current_user.role == 'truck_fleet_owner' %}
-                        Truck Requests
-                        {% else %}
-                        Your Requests
-                        {% endif %}
-                    </h2>
-                </div>
-            </div>
-
-            <div class="row">
-                {% if current_user.role == 'truck_fleet_owner' %}
-                {% set has_requests = false %}
-                {% for truck in current_user.trucks %}
-                {% for request in truck.truck_requests|sort(attribute='request_date', reverse=true) %}
-                {% set has_requests = true %}
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm hover-shadow">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <h5 class="card-title mb-0">{{ truck.name }}</h5>
-                                <span class="badge {% if request.status == 'Pending' %}bg-warning
-                                                             {% elif request.status == 'Accepted' %}bg-success
-                                                             {% else %}bg-danger{% endif %}">
-                                    {{ request.status }}
-                                </span>
-                            </div>
-                            <p class="card-text">
-                                <strong>From:</strong> {{ request.origin }}<br>
-                                <strong>To:</strong> {{ request.destination }}<br>
-                                <strong>Requester:</strong> {{ request.requester.username }}<br>
-                                <strong>Date:</strong> {{ request.request_date.strftime('%Y-%m-%d %H:%M') }}
-                            </p>
-                            {% if request.status == 'Pending' %}
-                            <div class="mt-3">
-                                <form
-                                    action="{{ url_for('dashboard_routes.handle_request', request_id=request.id, action='accept') }}"
-                                    method="POST" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-success btn-sm">Accept</button>
-                                </form>
-                                <form
-                                    action="{{ url_for('dashboard_routes.handle_request', request_id=request.id, action='reject') }}"
-                                    method="POST" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-danger btn-sm">Reject</button>
-                                </form>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-                {% endfor %}
-                {% else %}
                 {% if sent_requests %}
-                {% for request in sent_requests|sort(attribute='request_date', reverse=true) %}
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm hover-shadow">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <h5 class="card-title mb-0">{{ request.truck.name }}</h5>
-                                <span class="badge {% if request.status == 'Pending' %}bg-warning
-                                                            {% elif request.status == 'Accepted' %}bg-success
-                                                            {% else %}bg-danger{% endif %}">
-                                    {{ request.status }}
-                                </span>
+                    {% for request in sent_requests|sort(attribute='request_date', reverse=true) %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card border-0 shadow-sm hover-shadow h-100">
+                                <!-- Truck Image -->
+                                <img src="{{ url_for('static', filename='uploads/' + request.truck.image) }}" 
+                                     class="card-img-top" 
+                                     alt="{{ request.truck.name }}"
+                                     style="height: 200px; object-fit: cover;">
+                                
+                                <!-- If there's a cargo image, show it as a small overlay -->
+                                {% if request.cargo_image %}
+                                    <div class="position-absolute top-0 end-0 m-2">
+                                        <img src="{{ url_for('static', filename='uploads/' + request.cargo_image) }}" 
+                                             class="rounded-circle border border-white" 
+                                             alt="Cargo Image"
+                                             style="width: 60px; height: 60px; object-fit: cover;"
+                                             data-bs-toggle="tooltip"
+                                             title="Cargo Image">
+                                    </div>
+                                {% endif %}
+
+                                <div class="card-header bg-transparent border-bottom-0 pb-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="card-title mb-0">{{ request.truck.name }}</h5>
+                                        <span class="badge rounded-pill 
+                                            {% if request.status == 'Pending' %}bg-warning
+                                            {% elif request.status == 'Accepted' %}bg-success
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ request.status }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="card-body pt-3">
+                                    <div class="list-group list-group-flush">
+                                        <div class="list-group-item border-0 px-0">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <i class="icon-truck me-2"></i>
+                                                <small class="text-muted">Truck Details</small>
+                                            </div>
+                                            <strong>Plate Number:</strong> {{ request.truck.plate_number }}<br>
+                                            <strong>Owner:</strong> {{ request.truck.owner.username }}
+                                        </div>
+
+                                        <div class="list-group-item border-0 px-0">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <i class="icon-map-marker me-2"></i>
+                                                <small class="text-muted">Route</small>
+                                            </div>
+                                            <strong>From:</strong> {{ request.origin }}<br>
+                                            <strong>To:</strong> {{ request.destination }}
+                                        </div>
+
+                                        {% if request.cargo_details %}
+                                            <div class="list-group-item border-0 px-0">
+                                                <div class="d-flex align-items-center mb-1">
+                                                    <i class="icon-box me-2"></i>
+                                                    <small class="text-muted">Cargo Details</small>
+                                                </div>
+                                                {{ request.cargo_details }}
+                                            </div>
+                                        {% endif %}
+
+                                        {% if request.status == 'Accepted' %}
+                                            <div class="list-group-item border-0 px-0">
+                                                <div class="d-flex align-items-center mb-1">
+                                                    <i class="icon-user me-2"></i>
+                                                    <small class="text-muted">Driver Details</small>
+                                                </div>
+                                                <strong>Driver:</strong> {{ request.truck.driver_name }}<br>
+                                                <button type="button" 
+                                                        class="btn btn-primary mt-3 w-100"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#contactDriverModal{{ request.id }}">
+                                                    <i class="icon-phone me-2"></i>Contact Driver
+                                                </button>
+                                            </div>
+                                        {% endif %}
+
+                                        <div class="list-group-item border-0 px-0">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <i class="icon-calendar me-2"></i>
+                                                <small class="text-muted">Request Date</small>
+                                            </div>
+                                            {{ request.request_date.strftime('%B %d, %Y %H:%M') }}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <p class="card-text">
-                                <strong>From:</strong> {{ request.origin }}<br>
-                                <strong>To:</strong> {{ request.destination }}<br>
-                                <strong>Owner:</strong> {{ request.truck.owner.username }}<br>
-                                <strong>Date:</strong> {{ request.request_date.strftime('%Y-%m-%d %H:%M') }}
-                            </p>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12 text-center py-5">
+                        <div class="empty-state">
+                            <i class="icon-box display-1 text-muted mb-3"></i>
+                            <h3>No Requests Yet</h3>
+                            <p class="text-muted">Start by requesting available trucks for your shipments.</p>
+                            <a href="{{ url_for('browse_routes.browse') }}" class="btn btn-primary mt-3">
+                                <i class="icon-search"></i> Browse Available Trucks
+                            </a>
                         </div>
                     </div>
-                </div>
-                {% endfor %}
-                {% else %}
-                <div class="col-12 text-center py-5">
-                    <div class="empty-state">
-                        <i class="icon-box display-1 text-muted mb-3"></i>
-                        <h3>No Requests Yet</h3>
-                        <p class="text-muted">Start by requesting available trucks for your shipments.</p>
-                        <a href="{{ url_for('browse_routes.browse') }}" class="btn btn-primary mt-3">Browse Trucks</a>
-                    </div>
-                </div>
-                {% endif %}
                 {% endif %}
             </div>
         </div>
     </section>
+
+    <!-- Add Contact Driver Modal -->
+    {% for request in sent_requests %}
+        {% if request.status == 'Accepted' %}
+            <div class="modal fade" id="contactDriverModal{{ request.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Contact Driver - {{ request.truck.name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="driver-info mb-4">
+                                <h6 class="text-muted mb-3">Driver Information</h6>
+                                <p class="mb-2">
+                                    <strong><i class="icon-user me-2"></i>Name:</strong> 
+                                    {{ request.truck.driver_name }}
+                                </p>
+                                <p class="mb-2">
+                                    <strong><i class="icon-phone me-2"></i>Contact:</strong>
+                                    <a href="tel:{{ request.truck.driver_contact }}" class="text-decoration-none">
+                                        {{ request.truck.driver_contact }}
+                                    </a>
+                                </p>
+                                <p class="mb-0">
+                                    <strong><i class="icon-map-marker me-2"></i>Route:</strong><br>
+                                    From: {{ request.origin }}<br>
+                                    To: {{ request.destination }}
+                                </p>
+                            </div>
+                            <div class="alert alert-info" role="alert">
+                                <i class="icon-info-circle me-2"></i>
+                                Please note down these details. You can contact the driver directly to coordinate pickup and delivery.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <a href="tel:{{ request.truck.driver_contact }}" class="btn btn-primary">
+                                <i class="icon-phone me-2"></i>Call Driver
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
     {% endif %}
 
     <!-- Add Truck Modal -->

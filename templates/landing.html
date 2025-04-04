@@ -24,6 +24,78 @@
     <link rel="stylesheet" href="../static/css/flaticon.css">
     <link rel="stylesheet" href="../static/css/icomoon.css">
     <link rel="stylesheet" href="../static/css/style.css">
+
+    <style>
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: #01d28e;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        #howItWorksModal .modal-content {
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        #howItWorksModal .modal-body {
+            padding: 2rem;
+        }
+
+        #howItWorksModal h3 {
+            font-size: 1.25rem;
+            color: #000;
+        }
+
+        #howItWorksModal p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .modal-backdrop.show {
+            opacity: 0.8;
+        }
+
+        /* Add these to your existing styles */
+        .about-stat strong {
+            color: #01d28e;
+            font-weight: 600;
+        }
+        
+        .about-stat span {
+            font-size: 1.1rem;
+            color: #666;
+        }
+        
+        .about-content h3 {
+            color: #000;
+            font-weight: 600;
+        }
+        
+        .about-content h4 {
+            color: #01d28e;
+        }
+        
+        .about-image img {
+            transition: transform 0.3s ease;
+        }
+        
+        .about-image img:hover {
+            transform: scale(1.02);
+        }
+        
+        #about {
+            padding: 7em 0;
+            background: #fafafa;
+        }
+    </style>
   </head>
   <body>
     
@@ -37,27 +109,14 @@
           <div class="collapse navbar-collapse" id="ftco-nav">
               <ul class="navbar-nav ml-auto">
                   <li class="nav-item active"><a href="{{ url_for('auth_routes.landing')}}" class="nav-link">Home</a></li>
-                  <li class="nav-item"><a href="#about" class="nav-link">About</a></li>
-                  <li class="nav-item"><a href="#services" class="nav-link">Services</a></li>
-                  <li class="nav-item"><a href="#" class="nav-link" data-toggle="modal" data-target="#registerModal">Register</a></li>
                   <li class="nav-item"><a href="#" class="nav-link" data-toggle="modal" data-target="#loginModal">Login</a></li>
+                  <li class="nav-item"><a href="#" class="nav-link" data-toggle="modal" data-target="#registerModal">Register</a></li>
+                  <li class="nav-item"><a href="#about" class="nav-link scroll">About</a></li>
               </ul>
           </div>
       </div>
   </nav>
     <!-- END nav -->
-    <div class="container mt-3">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-              {% for category, message in messages %}
-                  <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                      {{ message }}
-                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                  </div>
-              {% endfor %}
-          {% endif %}
-      {% endwith %}
-  </div>
    <!-- hero section --> 
   <div class="hero-wrap" style="background-image: url('../static/images/silver_fleet.jpg');" data-stellar-background-ratio="0.5">
     <div class="overlay"></div>
@@ -67,7 +126,7 @@
                 <div class="text">
                     <h1 class="mb-4">Now <span>It's easy for you</span> <span>to ship cargo</span></h1>
                     <p style="font-size: 18px;">Connect with reliable truck fleet owners and transport your goods efficiently across the country.</p>
-                    <a href="#how-it-works" class="icon-wrap popup-vimeo d-flex align-items-center mt-4">
+                    <a href="#" class="icon-wrap d-flex align-items-center mt-4" data-toggle="modal" data-target="#howItWorksModal">
                         <div class="icon d-flex align-items-center justify-content-center">
                             <span class="ion-ios-play"></span>
                         </div>
@@ -77,34 +136,6 @@
                     </a>
                 </div>
             </div>
-            <div class="col-lg-2 col"></div>
-            <div class="col-lg-4 col-md-6 mt-0 mt-md-5 d-flex">
-                <form action="#" class="request-form ftco-animate">
-                    <h2>Plan Your Shipment</h2>
-                    <div class="form-group">
-                        <label for="" class="label">Pickup Location</label>
-                        <input type="text" class="form-control" placeholder="City, State, etc">
-                    </div>
-                    <div class="form-group">
-                        <label for="" class="label">Delivery Location</label>
-                        <input type="text" class="form-control" placeholder="City, State, etc">
-                    </div>
-                    <div class="d-flex">
-                        <div class="form-group mr-2">
-                            <label for="" class="label">Pickup Date</label>
-                            <input type="text" class="form-control" id="book_pick_date" placeholder="Date">
-                        </div>
-                        <div class="form-group ml-2">
-                            <label for="" class="label">Cargo Weight</label>
-                            <input type="text" class="form-control" placeholder="Tons">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <input type="submit" value="Find Available Trucks" class="btn btn-primary py-3 px-4">
-                    </div>
-                </form>
-            </div>
-        </div>
     </div>
 </div>
     <!-- Features Section -->
@@ -147,86 +178,112 @@
       </div>
   </div>
 </section>
-<!-- How It Works Section -->
-<section class="ftco-section">
+<!-- About Section -->
+<section id="about" class="ftco-section">
     <div class="container">
         <div class="row justify-content-center mb-5">
             <div class="col-md-7 text-center heading-section ftco-animate">
-                <h2 class="mb-3">How It Works</h2>
+                <span class="subheading">About Us</span>
+                <h2 class="mb-3">Your Trusted Logistics Partner</h2>
             </div>
         </div>
-        <div class="row">
-            <div class="col-md-3 ftco-animate">
-                <div class="steps text-center">
-                    <div class="step-number">01</div>
-                    <h3>Register</h3>
-                    <p>Create an account as a shipper or transport provider</p>
+        <div class="row ftco-animate">
+            <div class="col-md-6">
+                <div class="about-image">
+                    <img src="../static/images/driver.jpg" alt="About TransLink" class="img-fluid rounded shadow">
                 </div>
             </div>
-            <div class="col-md-3 ftco-animate">
-                <div class="steps text-center">
-                    <div class="step-number">02</div>
-                    <h3>Post or Browse</h3>
-                    <p>List your cargo needs or available trucks</p>
-                </div>
-            </div>
-            <div class="col-md-3 ftco-animate">
-                <div class="steps text-center">
-                    <div class="step-number">03</div>
-                    <h3>Connect</h3>
-                    <p>Match with the right partner for your needs</p>
-                </div>
-            </div>
-            <div class="col-md-3 ftco-animate">
-                <div class="steps text-center">
-                    <div class="step-number">04</div>
-                    <h3>Track & Complete</h3>
-                    <p>Monitor delivery and complete transaction</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-<!-- Statistics Section -->
-<section class="ftco-counter ftco-section img" id="section-counter">
-    <div class="overlay"></div>
-    <div class="container">
-        <div class="row">
-            <div class="col-md-6 col-lg-3 justify-content-center counter-wrap ftco-animate">
-                <div class="block-18">
-                    <div class="text text-border d-flex align-items-center">
-                        <strong class="number" data-number="60">0</strong>
-                        <span>Year <br>Experienced</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3 justify-content-center counter-wrap ftco-animate">
-                <div class="block-18">
-                    <div class="text text-border d-flex align-items-center">
-                        <strong class="number" data-number="1090">0</strong>
-                        <span>Total <br>Trucks</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3 justify-content-center counter-wrap ftco-animate">
-                <div class="block-18">
-                    <div class="text text-border d-flex align-items-center">
-                        <strong class="number" data-number="2590">0</strong>
-                        <span>Happy <br>Customers</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3 justify-content-center counter-wrap ftco-animate">
-                <div class="block-18">
-                    <div class="text d-flex align-items-center">
-                        <strong class="number" data-number="67">0</strong>
-                        <span>Total <br>Branches</span>
+            <div class="col-md-6 pl-md-5">
+                <div class="about-content">
+                    <h3 class="mb-4">Who We Are</h3>
+                    <p class="mb-4">TransLink is your trusted partner in seamless cargo transportation. We connect shippers with reliable truck drivers, making it easier to transport goods efficiently and affordably.</p>
+                    
+                    <h4 class="mb-3">Our Mission</h4>
+                    <p class="mb-4">Whether you're looking to move freight or optimize your logistics, TransLink provides a smart and streamlined solution for all your transportation needs.</p>
+                    
+                    <div class="row mt-5">
+                        <div class="col-md-6">
+                            <div class="about-stat text-center mb-4">
+                                <strong class="d-block display-4 text-primary">500+</strong>
+                                <span>Successful Deliveries</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="about-stat text-center mb-4">
+                                <strong class="d-block display-4 text-primary">98%</strong>
+                                <span>Customer Satisfaction</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+<!-- How It Works Modal -->
+<div class="modal fade" id="howItWorksModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">How TransLink Works</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Modal Content -->
+                <div class="container-fluid px-0">
+                    <div class="row">
+                        <!-- Step 1 -->
+                        <div class="col-md-6 mb-4">
+                            <div class="d-flex align-items-center">
+                                <div class="step-number">01</div>
+                                <div class="ml-3">
+                                    <h3 class="mb-2">Register</h3>
+                                    <p class="mb-0">Create an account as a shipper or transport provider.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Step 2 -->
+                        <div class="col-md-6 mb-4">
+                            <div class="d-flex align-items-center">
+                                <div class="step-number">02</div>
+                                <div class="ml-3">
+                                    <h3 class="mb-2">Post or Browse</h3>
+                                    <p class="mb-0">List your trucks or browse available ones.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Step 3 -->
+                        <div class="col-md-6 mb-4">
+                            <div class="d-flex align-items-center">
+                                <div class="step-number">03</div>
+                                <div class="ml-3">
+                                    <h3 class="mb-2">Connect</h3>
+                                    <p class="mb-0">Match with the right partner and communicate directly.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Step 4 -->
+                        <div class="col-md-6 mb-4">
+                            <div class="d-flex align-items-center">
+                                <div class="step-number">04</div>
+                                <div class="ml-3">
+                                    <h3 class="mb-2">Track & Complete</h3>
+                                    <p class="mb-0">Monitor your shipment and complete transactions.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Got it!</button>
+            </div>
+        </div>
+    </div>
+</div>
+
     <footer class="ftco-footer ftco-bg-dark ftco-section">
       <div class="container">
         <div class="row mb-5">
@@ -302,7 +359,30 @@
           }, 3000);
       });
   });
-  </script>
+</script>
+<script>
+$(document).ready(function() {
+    // Ensure only one modal is shown
+    $('.icon-wrap').on('click', function(e) {
+        e.preventDefault();
+        $('#howItWorksModal').modal('show');
+    });
+});
+</script>
+<script>
+$(document).ready(function() {
+    // Smooth scrolling for navigation links
+    $('a.scroll').click(function(e) {
+        if (this.hash !== '') {
+            e.preventDefault();
+            var hash = this.hash;
+            $('html, body').animate({
+                scrollTop: $(hash).offset().top - 70 // 70px offset for navbar
+            }, 800, 'easeInOutExpo');
+        }
+    });
+});
+</script>
 <!-- Main script (should be last to ensure everything else is loaded) -->
 <script src="../static/js/main.js"></script>
 

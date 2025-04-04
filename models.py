@@ -11,6 +11,7 @@ class User(db.Model, UserMixin):
     role = db.Column(db.String(50), nullable=False)
     avatar = db.Column(db.String(200), nullable=True, default='default_avatar.jpg')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
 
     def get_id(self):
         return str(self.id)
@@ -62,6 +63,7 @@ class Truck(db.Model):
     available = db.Column(db.Boolean, default=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    driver_contact = db.Column(db.String(20), nullable=True)
     
     # Relationships
     owner = relationship('User', back_populates='trucks')
@@ -74,6 +76,7 @@ class TruckRequest(db.Model):
     origin = db.Column(db.String(200), nullable=False)
     destination = db.Column(db.String(200), nullable=False)
     cargo_details = db.Column(db.Text, nullable=True)
+    cargo_image = db.Column(db.String(200), nullable=True)  # Add this line
     status = db.Column(db.String(20), default='Pending')
     request_date = db.Column(db.DateTime, default=datetime.utcnow)
     

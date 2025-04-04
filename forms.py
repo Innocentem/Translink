@@ -51,6 +51,11 @@ class TruckForm(FlaskForm):
         'Driver Name', 
         validators=[DataRequired(), Length(min=3, max=100)]
     )
+    driver_contact = StringField(
+        'Driver Contact', 
+        validators=[DataRequired(), Length(min=10, max=20)],
+        description="Enter driver's phone number"
+    )
     routes = StringField(
         'Routes', 
         validators=[DataRequired()],

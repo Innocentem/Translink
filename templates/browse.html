@@ -52,21 +52,6 @@
             </div>
         </div>
     </nav>
-
-    <!-- Flash Messages -->
-    <div class="container mt-3">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-    </div>
-
     <!-- Hero Section -->
     <div class="hero-wrap ftco-degree-bg" style="background-image: url('../static/images/request.jpg');" data-stellar-background-ratio="0.5">
         <div class="overlay"></div>
@@ -91,48 +76,78 @@
                         <div class="col-md-12 d-flex align-items-center">
                             <div class="services-wrap rounded-right w-100">
                                 <h3 class="heading-section mb-4">Find Your Perfect Transport Solution</h3>
-                                <div class="row d-flex mb-4">
-                                    <div class="col-lg align-items-end">
-                                        <div class="form-group">
-                                            <label for="#">Cargo Type</label>
-                                            <div class="form-field">
-                                                <div class="select-wrap">
-                                                    <div class="icon"><span class="ion-ios-arrow-down"></span></div>
-                                                    <select name="" id="" class="form-control">
-                                                        <option value="">Select Type</option>
-                                                        <option value="">Perishable</option>
-                                                        <option value="">Non-Perishable</option>
-                                                        <option value="">Fragile</option>
-                                                        <option value="">Heavy Machinery</option>
-                                                    </select>
+                                <form action="{{ url_for('browse_routes.browse') }}" method="GET" class="row d-flex mb-4">
+                                    <div class="col-md-5 d-flex align-self-stretch">
+                                        <div class="form-group w-100">
+                                            <label for="searchInput" class="label">Search by Truck Name or Route</label>
+                                            <div class="input-group">
+                                                <input type="text" 
+                                                       class="form-control" 
+                                                       id="searchInput" 
+                                                       name="search"
+                                                       value="{{ search }}" 
+                                                       placeholder="e.g. Lagos-Abuja or Truck name">
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text">
+                                                        <i class="icon-search"></i>
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-lg align-items-end">
-                                        <div class="form-group">
-                                            <label for="#">Truck Type</label>
-                                            <div class="form-field">
-                                                <div class="select-wrap">
-                                                    <div class="icon"><span class="ion-ios-arrow-down"></span></div>
-                                                    <select name="" id="" class="form-control">
-                                                        <option value="">Any Type</option>
-                                                        <option value="">Flatbed</option>
-                                                        <option value="">Box Truck</option>
-                                                        <option value="">Refrigerated</option>
-                                                    </select>
-                                                </div>
+
+                                    <div class="col-md-4 d-flex align-self-stretch">
+                                        <div class="form-group w-100">
+                                            <label for="statusFilter" class="label">Availability Status</label>
+                                            <select name="status" id="statusFilter" class="form-control">
+                                                <option value="" {% if not status %}selected{% endif %}>All Trucks</option>
+                                                <option value="available" {% if status == 'available' %}selected{% endif %}>Available Only</option>
+                                                <option value="booked" {% if status == 'booked' %}selected{% endif %}>Booked Only</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-3 d-flex align-self-stretch">
+                                        <div class="form-group w-100">
+                                            <label class="label">&nbsp;</label>
+                                            <div class="d-flex">
+                                                <button type="submit" class="btn btn-primary py-3 px-4 w-100">
+                                                    <i class="icon-search"></i> Search
+                                                </button>
+                                                {% if search or status %}
+                                                <a href="{{ url_for('browse_routes.browse') }}" 
+                                                   class="btn btn-secondary py-3 px-4 ml-2">
+                                                    <i class="icon-refresh"></i>
+                                                </a>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-lg align-self-end">
-                                        <div class="form-group">
-                                            <div class="form-field">
-                                                <input type="submit" value="Search" class="form-control btn btn-primary">
-                                            </div>
-                                        </div>
+                                </form>
+
+                                {% if search or status %}
+                                <div class="active-filters mb-4">
+                                    <div class="d-flex align-items-center">
+                                        <span class="mr-2">Active Filters:</span>
+                                        {% if search %}
+                                        <span class="badge badge-primary mr-2">
+                                            Search: {{ search }}
+                                        </span>
+                                        {% endif %}
+                                        {% if status %}
+                                        <span class="badge badge-primary mr-2">
+                                            Status: {{ status|title }}
+                                        </span>
+                                        {% endif %}
                                     </div>
                                 </div>
+                                {% endif %}
+
+                                <!-- Results count -->
+                                <p class="text-muted">
+                                    Showing {{ trucks.items|length }} of {{ trucks.total }} trucks
+                                    {% if search or status %}matching your criteria{% endif %}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -174,11 +189,15 @@
                                 <small class="text-muted">Driver: {{ truck.driver_name }}</small><br>
                                 <small class="text-muted">Plate: {{ truck.plate_number }}</small>
                             </p>
+                        </div>
+                        <div class="card-footer bg-white border-0">
                             {% if current_user.role == 'transportation_service_user' and truck.available %}
-                            <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal"
-                                data-bs-target="#requestTruckModal{{ truck.id }}">
-                                <i class="icon-truck"></i> Request Truck
-                            </button>
+                                <button type="button" 
+                                        class="btn btn-primary w-100" 
+                                        data-toggle="modal" 
+                                        data-target="#requestTruckModal{{ truck.id }}">
+                                    <i class="icon-truck"></i> Request Truck
+                                </button>
                             {% endif %}
                         </div>
                     </div>
@@ -200,7 +219,7 @@
                     {% if trucks.has_prev %}
                     <li class="page-item">
                         <a class="page-link"
-                            href="{{ url_for('browse_routes.browse', truck_page=trucks.prev_num, search=search, status=status) }}">
+                            href="{{ url_for('browse_routes.browse', page=trucks.prev_num, search=search, status=status) }}">
                             Previous
                         </a>
                     </li>
@@ -209,7 +228,7 @@
                     {% for page in range(1, trucks.pages + 1) %}
                     <li class="page-item {% if page == trucks.page %}active{% endif %}">
                         <a class="page-link"
-                            href="{{ url_for('browse_routes.browse', truck_page=page, search=search, status=status) }}">
+                            href="{{ url_for('browse_routes.browse', page=page, search=search, status=status) }}">
                             {{ page }}
                         </a>
                     </li>
@@ -218,60 +237,9 @@
                     {% if trucks.has_next %}
                     <li class="page-item">
                         <a class="page-link"
-                            href="{{ url_for('browse_routes.browse', truck_page=trucks.next_num, search=search, status=status) }}">
+                            href="{{ url_for('browse_routes.browse', page=trucks.next_num, search=search, status=status) }}">
                             Next
                         </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
-    </section>
-
-    <!-- Cargo Section -->
-    <section class="ftco-section bg-light">
-        <div class="container">
-            <div class="row justify-content-center mb-5">
-                <div class="col-md-7 text-center heading-section ftco-animate">
-                    <span class="subheading">Cargo</span>
-                    <h2 class="mb-3">Available Cargo</h2>
-                </div>
-            </div>
-            <div class="row d-flex justify-content-center">
-                {% for cargo in cargos %}
-                <div class="col-md-6 col-lg-4 mb-4 d-flex ftco-animate">
-                    <div class="card shadow-sm">
-                        <div class="card-img-top"
-                            style="background-image: url('{{ url_for('static', filename='uploads/' + cargo.image) }}'); height: 200px; background-size: cover; background-position: center;">
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title">{{ cargo.name }}</h5>
-                            <p class="card-text">Route: {{ cargo.origin }} to {{ cargo.destination }}</p>
-                            <p class="card-text">Weight: {{ cargo.weight }} kg</p>
-                            <p>
-                                {% if cargo.status == 'Available' %}
-                                <span class="badge bg-success">Available for transportation</span>
-                                {% else %}
-                                <span class="badge bg-danger">Transported</span>
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            <!-- Pagination for Cargo -->
-            <nav aria-label="Cargo Pagination" class="pagination-container">
-                <ul class="pagination">
-                    {% if cargos.has_prev %}
-                    <li class="page-item">
-                        <a class="page-link"
-                            href="{{ url_for('browse_routes.browse', cargo_page=cargos.prev_num) }}">Previous</a>
-                    </li>
-                    {% endif %}
-                    {% if cargos.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="{{ url_for('browse_routes.browse', cargo_page=cargos.next_num) }}">Next</a>
                     </li>
                     {% endif %}
                 </ul>
@@ -282,34 +250,48 @@
     <!-- Request Truck Modals -->
     {% if current_user.role == 'transportation_service_user' %}
         {% for truck in trucks.items %}
-        <div class="modal fade" id="requestTruckModal{{ truck.id }}" tabindex="-1" aria-labelledby="requestTruckModalLabel{{ truck.id }}" aria-hidden="true">
-            <div class="modal-dialog">
+        <div class="modal fade" id="requestTruckModal{{ truck.id }}" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="requestTruckModalLabel{{ truck.id }}">Request Truck: {{ truck.name }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <h5 class="modal-title">Request Truck: {{ truck.name }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
-                    <div class="modal-body">
-                        <form action="{{ url_for('browse_routes.request_truck', truck_id=truck.id) }}" method="POST">
+                    <form action="{{ url_for('browse_routes.request_truck', truck_id=truck.id) }}" 
+                          method="POST"
+                          enctype="multipart/form-data">
+                        <div class="modal-body">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <div class="mb-3">
-                                <label for="origin{{ truck.id }}" class="form-label">Origin Location</label>
-                                <input type="text" class="form-control" id="origin{{ truck.id }}" name="origin" required>
+                            <div class="form-group">
+                                <label>Origin Location*</label>
+                                <input type="text" name="origin" class="form-control" required>
                             </div>
-                            <div class="mb-3">
-                                <label for="destination{{ truck.id }}" class="form-label">Destination</label>
-                                <input type="text" class="form-control" id="destination{{ truck.id }}" name="destination" required>
+                            <div class="form-group">
+                                <label>Destination*</label>
+                                <input type="text" name="destination" class="form-control" required>
                             </div>
-                            <div class="mb-3">
-                                <label for="cargo_details{{ truck.id }}" class="form-label">Cargo Details</label>
-                                <textarea class="form-control" id="cargo_details{{ truck.id }}" name="cargo_details" rows="3"></textarea>
+                            <div class="form-group">
+                                <label>Cargo Details (Optional)</label>
+                                <textarea name="cargo_details" class="form-control" rows="3"></textarea>
                             </div>
-                            <div class="modal-footer px-0 pb-0">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-primary">Submit Request</button>
+                            <div class="form-group">
+                                <label>Cargo Image (Optional)</label>
+                                <input type="file" 
+                                       name="cargo_image" 
+                                       class="form-control" 
+                                       accept="image/*">
+                                <small class="form-text text-muted">
+                                    Supported formats: JPG, PNG, JPEG
+                                </small>
                             </div>
-                        </form>
-                    </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Submit Request</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -347,11 +329,13 @@
         </svg>
     </div>
 
-    <!-- Scripts -->
+    <!-- Essential Scripts (Load these first) -->
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/js/jquery-migrate-3.0.1.min.js"></script>
     <script src="../static/js/popper.min.js"></script>
     <script src="../static/js/bootstrap.min.js"></script>
+
+    <!-- Additional Features (Load after essential scripts) -->
     <script src="../static/js/jquery.easing.1.3.js"></script>
     <script src="../static/js/jquery.waypoints.min.js"></script>
     <script src="../static/js/jquery.stellar.min.js"></script>
@@ -363,6 +347,45 @@
     <script src="../static/js/jquery.timepicker.min.js"></script>
     <script src="../static/js/scrollax.min.js"></script>
     <script src="../static/js/main.js"></script>
+
+    <!-- Custom Script for Modals -->
+    <script>
+    window.addEventListener('load', function() {
+        // Remove the loader
+        document.querySelector('#ftco-loader').classList.remove('show');
+        
+        // Initialize modals
+        var requestForms = document.querySelectorAll('form[action*="request_truck"]');
+        requestForms.forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        });
+    });
+    </script>
+
+    <script>
+    $(document).ready(function() {
+        // Initialize modals
+        $('.modal').on('show.bs.modal', function (e) {
+            // Clear form when modal opens
+            $(this).find('form')[0].reset();
+        });
+
+        // Form validation
+        $('form[action*="request_truck"]').on('submit', function(e) {
+            if (!this.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            $(this).addClass('was-validated');
+        });
+    });
+    </script>
 </body>
 
 </html>
