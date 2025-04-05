@@ -4,3 +4,4 @@ drop.py
 create_admin.py
 instance/
 migrations/
+--pycache__/
