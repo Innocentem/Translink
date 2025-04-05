@@ -25,9 +25,7 @@ class User(db.Model, UserMixin):
 
     @property
     def is_active(self):
-        if self.is_suspended:
-            return datetime.utcnow() > self.suspension_end if self.suspension_end else False
-        return True
+        return not self.is_suspended
 
     @property
     def is_anonymous(self):

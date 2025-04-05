@@ -71,8 +71,8 @@ def create_app():
     # Register blueprints
     app.register_blueprint(auth_routes)
     app.register_blueprint(dashboard_routes)
-    app.register_blueprint(browse_routes)
     app.register_blueprint(admin_routes)
+    app.register_blueprint(browse_routes)
 
     # Error handlers
     @app.errorhandler(404)

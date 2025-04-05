@@ -24,6 +24,7 @@ def role_required(role):
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
                 return redirect(url_for('auth_routes.landing'))
+            print(f"Role check - User: {current_user.username}, Role: {current_user.role}, Required: {role}")  # Debug print
             if current_user.role != role:
                 flash('Unauthorized access!', 'danger')
                 return redirect(url_for('dashboard_routes.dashboard'))
@@ -31,17 +32,28 @@ def role_required(role):
         return decorated_function
     return decorator
 
+def route_debug(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        print(f"Route: {request.endpoint}")
+        if current_user.is_authenticated:
+            print(f"User: {current_user.username}, Role: {current_user.role}")
+        return f(*args, **kwargs)
+    return decorated_function
+
 auth_routes = Blueprint('auth_routes', __name__)
 
 @auth_routes.route('/')
 @auth_routes.route('/landing', methods=['GET', 'POST'])
 def landing():
+    # If user is already logged in, redirect based on role
     if current_user.is_authenticated:
+        print(f"Authenticated user: {current_user.username}, Role: {current_user.role}")  # Debug print
         if current_user.role == 'admin':
             return redirect(url_for('admin_routes.analytics_dashboard'))
         return redirect(url_for('dashboard_routes.dashboard'))
 
-    # Initialize forms
+    # Initialize forms for non-authenticated users
     register_form = RegisterForm()
     login_form = LoginForm()
     
@@ -54,6 +66,30 @@ def is_safe_url(target):
     ref_url = urlparse(request.host_url)
     test_url = urlparse(urljoin(request.host_url, target))
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
+
+@auth_routes.route('/login', methods=['POST'])
+def login():
+    print("Login route called")  # Debug print
+    login_form = LoginForm()
+    
+    if login_form.validate_on_submit():
+        print("Form validated")  # Debug print
+        user = User.query.filter_by(username=login_form.username.data).first()
+        print(f"User found: {user}, Role: {user.role if user else None}")  # Debug print
+        
+        if user and check_password_hash(user.password, login_form.password.data):
+            login_user(user)
+            print(f"User logged in - Role: {user.role}")  # Debug print
+            
+            if user.role == 'admin':
+                print("Redirecting to analytics")  # Debug print
+                return redirect(url_for('admin_routes.analytics_dashboard'))
+            return redirect(url_for('dashboard_routes.dashboard'))
+        else:
+            flash('Invalid username or password.', 'danger')
+            return redirect(url_for('auth_routes.landing'))
+    
+    return redirect(url_for('auth_routes.landing'))
 
 @auth_routes.route('/logout')
 @login_required
@@ -415,52 +451,58 @@ def admin_dashboard():
 
 @admin_routes.route('/analytics')
 @login_required
-@role_required('admin')
 def analytics_dashboard():
-    try:
-        # Get date range for filtering
-        days = request.args.get('days', '30')
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=int(days))
+    # First check if user is admin
+    if not current_user.is_authenticated or current_user.role != 'admin':
+        flash('Unauthorized access!', 'danger')
+        return redirect(url_for('dashboard_routes.dashboard'))
         
-        # Get all users and trucks with None checks
+    try:
+        print(f"Analytics route - User: {current_user.username}, Role: {current_user.role}")
+        
+        # Get all data
         users = User.query.all()
         trucks = Truck.query.all()
+        truck_requests = TruckRequest.query.all()
+        recent_activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(10).all()
         
-        # Get recent activities
-        recent_activities = ActivityLog.query.order_by(
-            ActivityLog.timestamp.desc()
-        ).limit(10).all()
-        
-        # Calculate analytics with safe checks
-        active_users = User.query.filter(
-            User.last_seen.isnot(None),
-            User.last_seen >= datetime.now().date()
-        ).count()
-
+        # Calculate analytics
         analytics = {
             'users': {
                 'total': len(users),
-                'new': User.query.filter(User.created_at >= start_date).count(),
-                'active': active_users
+                'new': len([u for u in users if (datetime.utcnow() - u.created_at).days <= 30]),
+                'active': len([u for u in users if u.last_seen and (datetime.utcnow() - u.last_seen).days <= 1])
             },
             'trucks': {
                 'total': len(trucks),
-                'available': Truck.query.filter_by(available=True).count(),
-                'booked': Truck.query.filter_by(available=False).count()
+                'available': len([t for t in trucks if t.available]),
+                'booked': len([t for t in trucks if not t.available])
             },
             'requests': {
-                'total': TruckRequest.query.count() or 0,
-                'accepted': TruckRequest.query.filter_by(status='Accepted').count() or 0
+                'total': len(truck_requests),
+                'accepted': len([r for r in truck_requests if r.status == 'Accepted'])
             }
         }
         
-        # Calculate success rate safely
-        total_requests = analytics['requests']['total']
-        success_rate = (analytics['requests']['accepted'] / total_requests * 100) if total_requests > 0 else 0
-        
-        # Get truck requests
-        truck_requests = TruckRequest.query.order_by(TruckRequest.request_date.desc()).all()
+        success_rate = (analytics['requests']['accepted'] / analytics['requests']['total'] * 100) if analytics['requests']['total'] > 0 else 0
+
+        system_metrics = [
+            {
+                'metric_name': 'User Activity',
+                'metric_value': f"{analytics['users']['active']} active users",
+                'timestamp': datetime.utcnow()
+            },
+            {
+                'metric_name': 'Success Rate',
+                'metric_value': f"{success_rate:.1f}%",
+                'timestamp': datetime.utcnow()
+            },
+            {
+                'metric_name': 'Total Transactions',
+                'metric_value': str(analytics['requests']['total']),
+                'timestamp': datetime.utcnow()
+            }
+        ]
         
         return render_template('admin/analytics.html',
                              users=users,
@@ -468,8 +510,9 @@ def analytics_dashboard():
                              truck_requests=truck_requests,
                              analytics=analytics,
                              success_rate=success_rate,
-                             days=days,
-                             recent_activities=recent_activities)
+                             days=30,
+                             recent_activities=recent_activities,
+                             system_metrics=system_metrics)
                              
     except Exception as e:
         print(f"Analytics Error: {str(e)}")
