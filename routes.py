@@ -22,9 +22,11 @@ def role_required(role):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            if not current_user.is_authenticated or current_user.role != role:
-                flash('Unauthorized access!', 'danger')
+            if not current_user.is_authenticated:
                 return redirect(url_for('auth_routes.landing'))
+            if current_user.role != role:
+                flash('Unauthorized access!', 'danger')
+                return redirect(url_for('dashboard_routes.dashboard'))
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -34,81 +36,14 @@ auth_routes = Blueprint('auth_routes', __name__)
 @auth_routes.route('/')
 @auth_routes.route('/landing', methods=['GET', 'POST'])
 def landing():
-    # Handle potential redirect loops
-    if request.referrer and 'dashboard' in request.referrer:
-        flash('Session error. Please login again.', 'warning')
-        return render_template('landing.html', 
-                             register_form=RegisterForm(), 
-                             login_form=LoginForm())
+    if current_user.is_authenticated:
+        if current_user.role == 'admin':
+            return redirect(url_for('admin_routes.analytics_dashboard'))
+        return redirect(url_for('dashboard_routes.dashboard'))
 
-    if request.method == 'GET' and current_user.is_authenticated:
-        try:
-            if current_user.role == 'admin':
-                return redirect(url_for('admin_routes.analytics_dashboard'))
-            return redirect(url_for('dashboard_routes.dashboard'))
-        except Exception as e:
-            print(f"Landing Error: {str(e)}")
-            logout_user()
-            flash('Session error. Please login again.', 'warning')
-    
     # Initialize forms
     register_form = RegisterForm()
     login_form = LoginForm()
-    
-    # Handle login form submission
-    if 'login' in request.form and login_form.validate_on_submit():
-        user = User.query.filter_by(username=login_form.username.data).first()
-        
-        if user and check_password_hash(user.password, login_form.password.data):
-            login_user(user, remember=True)  # Add remember=True
-            user.last_seen = datetime.utcnow()
-            db.session.commit()
-            return redirect(url_for('dashboard_routes.dashboard'))
-        
-        flash('Invalid username or password!', 'danger')
-    
-    # Handle registration form submission
-    if 'register' in request.form and register_form.validate_on_submit():
-        try:
-            # Check for existing username
-            if User.query.filter_by(username=register_form.username.data).first():
-                flash('Username already exists!', 'danger')
-                return render_template('landing.html', 
-                                    register_form=register_form, 
-                                    login_form=login_form)
-            
-            # Handle avatar upload
-            avatar_filename = 'default-avatar.png'
-            if register_form.avatar.data:
-                try:
-                    avatar = register_form.avatar.data
-                    avatar_filename = secure_filename(f"{register_form.username.data}_{avatar.filename}")
-                    avatar_path = os.path.join(current_app.config['UPLOAD_FOLDER'], avatar_filename)
-                    avatar.save(avatar_path)
-                except Exception as e:
-                    flash(f'Error uploading avatar: {str(e)}', 'danger')
-                    avatar_filename = 'default-avatar.png'
-            
-            # Create new user
-            new_user = User(
-                username=register_form.username.data,
-                password=generate_password_hash(register_form.password.data, method='pbkdf2:sha256'),
-                role=register_form.role.data,
-                avatar=avatar_filename
-            )
-            
-            db.session.add(new_user)
-            db.session.commit()
-            
-            flash('Registration successful! Please login.', 'success')
-            return redirect(url_for('auth_routes.landing'))
-            
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Registration failed: {str(e)}', 'danger')
-            return render_template('landing.html', 
-                                register_form=register_form, 
-                                login_form=login_form)
     
     return render_template('landing.html', 
                          register_form=register_form, 
@@ -480,18 +415,15 @@ def admin_dashboard():
 
 @admin_routes.route('/analytics')
 @login_required
+@role_required('admin')
 def analytics_dashboard():
-    if current_user.role != 'admin':
-        flash('Unauthorized access!', 'danger')
-        return redirect(url_for('dashboard_routes.dashboard'))
-    
     try:
         # Get date range for filtering
         days = request.args.get('days', '30')
         end_date = datetime.now()
         start_date = end_date - timedelta(days=int(days))
         
-        # Get all users and trucks
+        # Get all users and trucks with None checks
         users = User.query.all()
         trucks = Truck.query.all()
         
@@ -500,11 +432,17 @@ def analytics_dashboard():
             ActivityLog.timestamp.desc()
         ).limit(10).all()
         
-        # Calculate analytics
+        # Calculate analytics with safe checks
+        active_users = User.query.filter(
+            User.last_seen.isnot(None),
+            User.last_seen >= datetime.now().date()
+        ).count()
+
         analytics = {
             'users': {
                 'total': len(users),
-                'new': User.query.filter(User.created_at >= start_date).count()
+                'new': User.query.filter(User.created_at >= start_date).count(),
+                'active': active_users
             },
             'trucks': {
                 'total': len(trucks),
@@ -512,43 +450,26 @@ def analytics_dashboard():
                 'booked': Truck.query.filter_by(available=False).count()
             },
             'requests': {
-                'total': TruckRequest.query.count(),
-                'accepted': TruckRequest.query.filter_by(status='Accepted').count()
+                'total': TruckRequest.query.count() or 0,
+                'accepted': TruckRequest.query.filter_by(status='Accepted').count() or 0
             }
         }
         
-        # Calculate success rate
-        success_rate = (analytics['requests']['accepted'] / analytics['requests']['total'] * 100) if analytics['requests']['total'] > 0 else 0
+        # Calculate success rate safely
+        total_requests = analytics['requests']['total']
+        success_rate = (analytics['requests']['accepted'] / total_requests * 100) if total_requests > 0 else 0
         
-        # System metrics
-        system_metrics = [
-            {
-                'metric_name': 'Average Response Time',
-                'metric_value': '2.5s',
-                'timestamp': datetime.now()
-            },
-            {
-                'metric_name': 'Request Success Rate',
-                'metric_value': f"{success_rate:.1f}%",
-                'timestamp': datetime.now()
-            },
-            {
-                'metric_name': 'Active Users Today',
-                'metric_value': User.query.filter(
-                    User.last_seen >= datetime.now().date()
-                ).count(),
-                'timestamp': datetime.now()
-            }
-        ]
+        # Get truck requests
+        truck_requests = TruckRequest.query.order_by(TruckRequest.request_date.desc()).all()
         
         return render_template('admin/analytics.html',
                              users=users,
                              trucks=trucks,
+                             truck_requests=truck_requests,
                              analytics=analytics,
                              success_rate=success_rate,
                              days=days,
-                             recent_activities=recent_activities,
-                             system_metrics=system_metrics)
+                             recent_activities=recent_activities)
                              
     except Exception as e:
         print(f"Analytics Error: {str(e)}")
@@ -717,3 +638,127 @@ def generate_metrics_report():
         print(f"Report generation error: {str(e)}")
         flash('Error generating metrics report. Please try again.', 'danger')
         return redirect(url_for('admin_routes.analytics_dashboard'))
+
+@admin_routes.route('/manage_account', methods=['POST'])  # Remove <int:user_id>
+@login_required
+@role_required('admin')
+def manage_account():
+    if not current_user.role == 'admin':
+        flash('Unauthorized access!', 'danger')
+        return redirect(url_for('dashboard_routes.dashboard'))
+    
+    action = request.form.get('action')
+    user_id = request.form.get('user_id')
+    
+    if not user_id:
+        flash('No user specified!', 'danger')
+        return redirect(url_for('admin_routes.analytics_dashboard'))
+    
+    try:
+        user = User.query.get_or_404(user_id)
+        
+        if user.role == 'admin':
+            flash('Cannot modify admin accounts!', 'danger')
+            return redirect(url_for('admin_routes.analytics_dashboard'))
+        
+        if action == 'delete':
+            # Log the deletion
+            ActivityLog.log_activity(
+                current_user.id,
+                'delete_account',
+                f'Admin deleted account: {user.username}'
+            )
+            db.session.delete(user)
+            flash(f'Account {user.username} has been deleted.', 'success')
+            
+        elif action == 'suspend':
+            days = int(request.form.get('suspension_days', 1))
+            reason = request.form.get('suspension_reason', 'No reason provided')
+            
+            user.is_suspended = True
+            user.suspension_end = datetime.utcnow() + timedelta(days=days)
+            user.suspension_reason = reason
+            
+            # Log the suspension
+            ActivityLog.log_activity(
+                current_user.id,
+                'suspend_account',
+                f'Admin suspended account: {user.username} for {days} days. Reason: {reason}'
+            )
+            flash(f'Account {user.username} has been suspended for {days} days.', 'success')
+            
+        elif action == 'unsuspend':
+            user.is_suspended = False
+            user.suspension_end = None
+            user.suspension_reason = None
+            
+            # Log the unsuspension
+            ActivityLog.log_activity(
+                current_user.id,
+                'unsuspend_account',
+                f'Admin unsuspended account: {user.username}'
+            )
+            flash(f'Account {user.username} has been unsuspended.', 'success')
+        
+        db.session.commit()
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error managing account: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin_routes.analytics_dashboard'))
+
+@admin_routes.route('/delete_post', methods=['POST'])
+@login_required
+@role_required('admin')
+def delete_post():
+    if not current_user.role == 'admin':
+        flash('Unauthorized access!', 'danger')
+        return redirect(url_for('dashboard_routes.dashboard'))
+    
+    post_type = request.form.get('post_type')
+    post_id = request.form.get('post_id')
+    reason = request.form.get('deletion_reason')
+    
+    try:
+        if post_type == 'truck':
+            post = Truck.query.get_or_404(post_id)
+            owner = post.owner
+            post_title = post.name
+        elif post_type == 'request':
+            post = TruckRequest.query.get_or_404(post_id)
+            owner = post.requester
+            post_title = f"Request #{post.id}"
+        else:
+            flash('Invalid post type!', 'danger')
+            return redirect(url_for('admin_routes.analytics_dashboard'))
+        
+        # Log the deletion
+        ActivityLog.log_activity(
+            current_user.id,
+            f'delete_{post_type}',
+            f'Admin deleted {post_type}: {post_title}. Reason: {reason}'
+        )
+        
+        # Notify the owner (you can implement this later)
+        # send_notification(owner.id, f'Your {post_type} has been removed by admin. Reason: {reason}')
+        
+        db.session.delete(post)
+        db.session.commit()
+        
+        flash(f'{post_type.title()} deleted successfully!', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting {post_type}: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin_routes.analytics_dashboard'))
+
+@admin_routes.before_request
+def update_last_seen():
+    if current_user.is_authenticated:
+        current_user.last_seen = datetime.utcnow()
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()

@@ -426,6 +426,314 @@
                 </div>
             </div>
         </div>
+
+        <!-- Content Moderation Section -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="section-title">Content Moderation</h5>
+                        <ul class="nav nav-tabs mb-4" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#trucks-tab">Trucks</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#requests-tab">Requests</a>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Trucks Tab -->
+                            <div class="tab-pane fade show active" id="trucks-tab">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Truck</th>
+                                                <th>Owner</th>
+                                                <th>Posted Date</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for truck in trucks %}
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <img src="{{ url_for('static', filename='uploads/' + truck.image) }}"
+                                                             class="rounded me-2"
+                                                             alt="{{ truck.name }}"
+                                                             style="width: 40px; height: 40px; object-fit: cover;">
+                                                        <div>
+                                                            <strong>{{ truck.name }}</strong><br>
+                                                            <small class="text-muted">{{ truck.plate_number }}</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>{{ truck.owner.username }}</td>
+                                                <td>{{ truck.created_at.strftime('%Y-%m-%d') }}</td>
+                                                <td>
+                                                    <span class="badge {% if truck.available %}bg-success{% else %}bg-warning{% endif %}">
+                                                        {{ 'Available' if truck.available else 'Booked' }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button type="button" 
+                                                            class="btn btn-sm btn-danger"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#deletePostModal"
+                                                            data-posttype="truck"
+                                                            data-postid="{{ truck.id }}"
+                                                            data-posttitle="{{ truck.name }}">
+                                                        <i class="icon-trash"></i> Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Requests Tab -->
+                            <div class="tab-pane fade" id="requests-tab">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Request Details</th>
+                                                <th>From</th>
+                                                <th>To</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for request in truck_requests %}
+                                            <tr>
+                                                <td>
+                                                    <div>
+                                                        <strong>{{ request.truck.name }}</strong><br>
+                                                        <small class="text-muted">By: {{ request.requester.username }}</small>
+                                                    </div>
+                                                </td>
+                                                <td>{{ request.origin }}</td>
+                                                <td>{{ request.destination }}</td>
+                                                <td>
+                                                    <span class="badge 
+                                                        {% if request.status == 'Pending' %}bg-warning
+                                                        {% elif request.status == 'Accepted' %}bg-success
+                                                        {% else %}bg-danger{% endif %}">
+                                                        {{ request.status }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button type="button" 
+                                                            class="btn btn-sm btn-danger"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#deletePostModal"
+                                                            data-posttype="request"
+                                                            data-postid="{{ request.id }}"
+                                                            data-posttitle="Request #{{ request.id }}">
+                                                        <i class="icon-trash"></i> Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Management Section -->
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="section-title">Account Management</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Role</th>
+                                        <th>Join Date</th>
+                                        <th>Last Seen</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users if user.role != 'admin' %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="{{ url_for('static', filename='uploads/' + user.avatar) }}"
+                                                     class="rounded-circle me-2"
+                                                     alt="{{ user.username }}'s avatar"
+                                                     style="width: 32px; height: 32px; object-fit: cover;">
+                                                {{ user.username }}
+                                            </div>
+                                        </td>
+                                        <td><span class="badge bg-info">{{ user.role|replace('_', ' ')|title }}</span></td>
+                                        <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                                        <td>
+                                            {% if user.last_seen %}
+                                                {{ user.last_seen.strftime('%Y-%m-%d %H:%M') if user.last_seen else 'Never' }}
+                                            {% else %}
+                                                Never
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user.is_suspended %}
+                                                <span class="badge bg-danger" data-bs-toggle="tooltip" 
+                                                      title="Until: {{ user.suspension_end.strftime('%Y-%m-%d') if user.suspension_end else 'Unknown' }}&#10;Reason: {{ user.suspension_reason or 'No reason provided' }}">
+                                                    Suspended
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" 
+                                                        data-bs-toggle="dropdown">
+                                                    Manage
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    {% if not user.is_suspended %}
+                                                    <li>
+                                                        <button type="button" class="dropdown-item text-warning"
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#suspendModal"
+                                                                data-username="{{ user.username }}"
+                                                                data-userid="{{ user.id }}">
+                                                            <i class="icon-lock"></i> Suspend Account
+                                                        </button>
+                                                    </li>
+                                                    {% else %}
+                                                    <li>
+                                                        <form action="{{ url_for('admin_routes.manage_account') }}" method="POST">
+                                                            <input type="hidden" name="action" value="unsuspend">
+                                                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                                                            <button type="submit" class="dropdown-item text-success">
+                                                                <i class="icon-unlock"></i> Unsuspend Account
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                    {% endif %}
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <button type="button" class="dropdown-item text-danger"
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#deleteModal"
+                                                                data-username="{{ user.username }}"
+                                                                data-userid="{{ user.id }}">
+                                                            <i class="icon-trash"></i> Delete Account
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Suspend Account Modal -->
+        <div class="modal fade" id="suspendModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="{{ url_for('admin_routes.manage_account') }}" method="POST">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Suspend Account</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="action" value="suspend">
+                            <input type="hidden" name="user_id" id="suspendUserId">
+                            <p>You are about to suspend <strong id="suspendUsername"></strong>'s account.</p>
+                            <div class="mb-3">
+                                <label class="form-label">Suspension Duration (days)</label>
+                                <input type="number" name="suspension_days" class="form-control" min="1" max="365" value="1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Reason for Suspension</label>
+                                <textarea name="suspension_reason" class="form-control" rows="3" required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-warning">Suspend Account</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Account Modal -->
+        <div class="modal fade" id="deleteModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="{{ url_for('admin_routes.manage_account') }}" method="POST">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Delete Account</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="user_id" id="deleteUserId">
+                            <p>Are you sure you want to permanently delete <strong id="deleteUsername"></strong>'s account?</p>
+                            <p class="text-danger">This action cannot be undone!</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Delete Account</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Post Modal -->
+        <div class="modal fade" id="deletePostModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="{{ url_for('admin_routes.delete_post') }}" method="POST">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Delete Post</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="post_type" id="deletePostType">
+                            <input type="hidden" name="post_id" id="deletePostId">
+                            <p>Are you sure you want to delete <strong id="deletePostTitle"></strong>?</p>
+                            <div class="mb-3">
+                                <label class="form-label">Reason for Deletion</label>
+                                <textarea name="deletion_reason" class="form-control" rows="3" required
+                                         placeholder="Provide a reason for deleting this post..."></textarea>
+                            </div>
+                            <p class="text-danger">This action cannot be undone!</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Delete Post</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
    <!-- Essential Scripts -->
@@ -448,6 +756,51 @@
             return new bootstrap.Popover(popoverTriggerEl)
         });
     });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle Suspend Modal
+    const suspendModal = document.getElementById('suspendModal')
+    if (suspendModal) {
+        suspendModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget
+            const username = button.getAttribute('data-username')
+            const userId = button.getAttribute('data-userid')
+            
+            this.querySelector('#suspendUsername').textContent = username
+            this.querySelector('#suspendUserId').value = userId
+        })
+    }
+    
+    // Handle Delete Modal
+    const deleteModal = document.getElementById('deleteModal')
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget
+            const username = button.getAttribute('data-username')
+            const userId = button.getAttribute('data-userid')
+            
+            this.querySelector('#deleteUsername').textContent = username
+            this.querySelector('#deleteUserId').value = userId
+        })
+    }
+
+    // Handle Delete Post Modal
+    const deletePostModal = document.getElementById('deletePostModal')
+    if (deletePostModal) {
+        deletePostModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget
+            const postType = button.getAttribute('data-posttype')
+            const postId = button.getAttribute('data-postid')
+            const postTitle = button.getAttribute('data-posttitle')
+            
+            this.querySelector('#deletePostType').value = postType
+            this.querySelector('#deletePostId').value = postId
+            this.querySelector('#deletePostTitle').textContent = postTitle
+        })
+    }
+})
 </script>
 </body>
 

@@ -12,6 +12,9 @@ class User(db.Model, UserMixin):
     avatar = db.Column(db.String(200), nullable=True, default='default_avatar.jpg')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    is_suspended = db.Column(db.Boolean, default=False)
+    suspension_end = db.Column(db.DateTime, nullable=True)
+    suspension_reason = db.Column(db.Text, nullable=True)
 
     def get_id(self):
         return str(self.id)
@@ -22,6 +25,8 @@ class User(db.Model, UserMixin):
 
     @property
     def is_active(self):
+        if self.is_suspended:
+            return datetime.utcnow() > self.suspension_end if self.suspension_end else False
         return True
 
     @property
