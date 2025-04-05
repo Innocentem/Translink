@@ -39,36 +39,12 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Login')
 # Truck Form (For Truck Fleet Owners)
 class TruckForm(FlaskForm):
-    name = StringField(
-        'Truck Name', 
-        validators=[DataRequired(), Length(min=3, max=100)]
-    )
-    plate_number = StringField(
-        'Plate Number', 
-        validators=[DataRequired(), Length(min=3, max=20)]
-    )
-    driver_name = StringField(
-        'Driver Name', 
-        validators=[DataRequired(), Length(min=3, max=100)]
-    )
-    driver_contact = StringField(
-        'Driver Contact', 
-        validators=[DataRequired(), Length(min=10, max=20)],
-        description="Enter driver's phone number"
-    )
-    routes = StringField(
-        'Routes', 
-        validators=[DataRequired()],
-        description="e.g., Lagos-Abuja, Abuja-Kano"
-    )
-    image = FileField(
-        'Truck Image', 
-        validators=[
-            DataRequired(),
-            FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')
-        ]
-    )
-    submit = SubmitField('Add Truck')
+    name = StringField('Truck Name', validators=[DataRequired()])
+    plate_number = StringField('Plate Number', validators=[DataRequired()])
+    driver_name = StringField('Driver Name', validators=[DataRequired()])
+    driver_contact = StringField('Driver Contact')
+    routes = StringField('Routes', validators=[DataRequired()])
+    image = FileField('Truck Image', validators=[DataRequired()])
 
 # Cargo Form (For Transportation Service Users)
 class CargoForm(FlaskForm):
